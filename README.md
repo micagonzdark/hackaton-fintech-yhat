@@ -62,7 +62,7 @@ Usar el simulador por terminal:
 Levantar la UI:
 
 ```bash
-python3 -m http.server 4173
+python3 -m http.server 4173 --bind 127.0.0.1
 ```
 
 Abrir:
@@ -74,6 +74,12 @@ http://127.0.0.1:4173/frontend/
 ## Variables de entorno
 
 Ver [.env.example](.env.example).
+
+## Documentación clave
+
+- [Guía simple para entender el modelo](docs/guia_modelo_para_pitch.md)
+- [Detalle técnico del modelo de datos y scoring](docs/data_model.md)
+- [Marco legal y reformulación como adelanto de cobros futuros](docs/legal_framework.md)
 
 ## Links útiles
 
