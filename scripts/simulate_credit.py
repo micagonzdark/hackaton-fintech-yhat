@@ -47,7 +47,7 @@ def list_hosts(conn):
             f"{row['city']:<15} "
             f"score={row['final_score']:<5.1f} "
             f"{row['decision']:<10} "
-            f"oferta={money(row['recommended_advance_ars'])}"
+            f"adelanto={money(row['recommended_advance_ars'])}"
         )
 
 
@@ -99,13 +99,13 @@ def show_host(conn, host_id):
         )
 
     print()
-    print("Oferta base")
+    print("Adelanto base")
     print("-" * 80)
     print(f"Decisión: {offer['decision']}")
     print(f"Score final: {offer['final_score']:.1f}")
-    print(f"Monto pedido: {money(offer['requested_amount_ars'])}")
-    print(f"Monto máximo: {money(offer['max_advance_ars'])}")
-    print(f"Monto recomendado: {money(offer['recommended_advance_ars'])}")
+    print(f"Adelanto pedido: {money(offer['requested_amount_ars'])}")
+    print(f"Tope de adelanto: {money(offer['max_advance_ars'])}")
+    print(f"Adelanto recomendado: {money(offer['recommended_advance_ars'])}")
     print(f"Retención: {pct(offer['holdback_pct'])}")
     print(f"Fee: {pct(offer['fee_pct'])}")
     print(f"Stress -30%: {offer['stress_down_30']}")
@@ -191,38 +191,38 @@ def simulate(conn, host_id, requested_amount, season_drop_pct, holdback_pct, fee
     print(f"Caída de temporada: {pct(season_drop_pct)}")
     print(f"Ingreso futuro P10 base: {money(host['expected_future_revenue_p10_ars'])}")
     print(f"Ingreso futuro P10 ajustado: {money(adjusted_revenue)}")
-    print(f"Monto pedido: {money(base_requested)}")
+    print(f"Adelanto pedido: {money(base_requested)}")
     print(f"Retención: {pct(base_holdback)}")
     print(f"Fee: {pct(base_fee)}")
-    print(f"Monto máximo simulado: {money(max_advance)}")
-    print(f"Monto recomendado simulado: {money(recommended)}")
+    print(f"Tope de adelanto simulado: {money(max_advance)}")
+    print(f"Adelanto recomendado simulado: {money(recommended)}")
     if recommended <= 0:
-        print("Repago con reservas futuras: no aplica")
+        print("Recuperación con reservas futuras: no aplica")
     else:
         print(f"Cobro estimado con reservas futuras: {money(collected)}")
-        print(f"Meses observados para repago: {months}")
-        print(f"Repago con reservas futuras: {'sí' if fully_repaid else 'no / requiere flujo adicional'}")
+        print(f"Meses observados para recuperación: {months}")
+        print(f"Recuperación con reservas futuras: {'sí' if fully_repaid else 'no / requiere flujo adicional'}")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Simulador simple de crédito estacional para anfitriones."
+        description="Simulador simple de adelanto estacional para anfitriones."
     )
     parser.add_argument("--db", default=str(DEFAULT_DB), help="Ruta a la base SQLite.")
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    subparsers.add_parser("list", help="Listar hosts y ofertas base.")
+    subparsers.add_parser("list", help="Listar hosts y adelantos base.")
 
     show_parser = subparsers.add_parser("show", help="Ver detalle de un host.")
     show_parser.add_argument("host_id")
 
-    sim_parser = subparsers.add_parser("simulate", help="Simular una oferta.")
+    sim_parser = subparsers.add_parser("simulate", help="Simular un adelanto.")
     sim_parser.add_argument("host_id")
-    sim_parser.add_argument("--requested", type=float, default=None, help="Monto pedido en ARS.")
+    sim_parser.add_argument("--requested", type=float, default=None, help="Adelanto pedido en ARS.")
     sim_parser.add_argument("--season-drop", type=float, default=30, help="Caída estimada de temporada en porcentaje.")
-    sim_parser.add_argument("--holdback", type=float, default=None, help="Retención de payouts en porcentaje.")
-    sim_parser.add_argument("--fee", type=float, default=None, help="Fee/costo del crédito en porcentaje.")
+    sim_parser.add_argument("--holdback", type=float, default=None, help="Retención de cobros en porcentaje.")
+    sim_parser.add_argument("--fee", type=float, default=None, help="Fee/costo del adelanto en porcentaje.")
 
     args = parser.parse_args()
     db_path = Path(args.db)

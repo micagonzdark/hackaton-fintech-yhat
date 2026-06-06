@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Renta Estable | Simulador de crédito</title>
+    <title>Renta Estable | Simulador de adelanto</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -11,7 +11,7 @@
       <header class="topbar">
         <div>
           <p class="eyebrow">Renta Estable</p>
-          <h1>Simulador de crédito estacional</h1>
+          <h1>Simulador de adelanto estacional</h1>
         </div>
         <div class="topbar-controls">
           <label class="field compact">
@@ -23,7 +23,7 @@
       </header>
 
       <main class="dashboard">
-        <section class="summary-grid" aria-label="Resumen de oferta">
+        <section class="summary-grid" aria-label="Resumen de adelanto">
           <article class="metric-panel decision-panel">
             <span class="metric-label">Decisión</span>
             <strong id="decisionValue">-</strong>
@@ -35,12 +35,12 @@
             <div class="meter"><span id="scoreMeter"></span></div>
           </article>
           <article class="metric-panel">
-            <span class="metric-label">Monto recomendado</span>
+            <span class="metric-label">Adelanto recomendado</span>
             <strong id="recommendedValue">-</strong>
             <small id="maxAdvanceValue">-</small>
           </article>
           <article class="metric-panel">
-            <span class="metric-label">Repago visible</span>
+            <span class="metric-label">Recuperación visible</span>
             <strong id="repaymentValue">-</strong>
             <small id="repaymentHint">-</small>
           </article>
@@ -54,7 +54,7 @@
             </div>
 
             <label class="field">
-              <span>Monto solicitado</span>
+              <span>Adelanto solicitado</span>
               <input id="requestedAmount" type="number" min="0" step="50000" />
             </label>
 
@@ -73,7 +73,7 @@
 
             <label class="range-field">
               <span>
-                <b>Retención de payouts</b>
+                <b>Retención de cobros</b>
                 <output id="holdbackOutput">0%</output>
               </span>
               <input id="holdback" type="range" min="0" max="50" step="1" />
@@ -85,6 +85,43 @@
                 <output id="feeOutput">0%</output>
               </span>
               <input id="fee" type="range" min="0" max="30" step="1" />
+            </label>
+
+            <div class="section-heading cluster-title">
+              <h2>Supuestos de margen</h2>
+              <span>Cartera</span>
+            </div>
+
+            <label class="range-field">
+              <span>
+                <b>Costo de fondeo anual</b>
+                <output id="fundingCostOutput">35%</output>
+              </span>
+              <input id="fundingCost" type="range" min="0" max="70" step="5" value="35" />
+            </label>
+
+            <label class="range-field">
+              <span>
+                <b>Probabilidad de default</b>
+                <output id="defaultProbabilityOutput">6%</output>
+              </span>
+              <input id="defaultProbability" type="range" min="0" max="25" step="1" value="6" />
+            </label>
+
+            <label class="range-field">
+              <span>
+                <b>Pérdida dado default</b>
+                <output id="lossGivenDefaultOutput">35%</output>
+              </span>
+              <input id="lossGivenDefault" type="range" min="0" max="80" step="5" value="35" />
+            </label>
+
+            <label class="range-field">
+              <span>
+                <b>Costo operativo</b>
+                <output id="operatingCostOutput">1%</output>
+              </span>
+              <input id="operatingCost" type="range" min="0" max="10" step="0.5" value="1" />
             </label>
 
             <div class="section-heading cluster-title">
@@ -131,6 +168,32 @@
               </article>
             </div>
           </section>
+        </section>
+
+        <section class="portfolio-section" aria-label="Métricas de cartera">
+          <article class="portfolio-panel">
+            <div class="section-heading">
+              <h2>Métricas de cartera</h2>
+              <span id="portfolioCount">-</span>
+            </div>
+            <div id="portfolioMetrics" class="portfolio-metrics"></div>
+          </article>
+
+          <article class="unit-panel">
+            <div class="section-heading">
+              <h2>Unit economics</h2>
+              <span id="portfolioMarginLabel">-</span>
+            </div>
+            <div id="unitEconomics" class="unit-economics"></div>
+          </article>
+
+          <article class="sensitivity-panel">
+            <div class="section-heading">
+              <h2>Sensibilidad</h2>
+              <span>Fondeo · PD · LGD</span>
+            </div>
+            <div id="sensitivityTable" class="sensitivity-table"></div>
+          </article>
         </section>
       </main>
     </div>

@@ -1,8 +1,8 @@
-# Base de datos MVP: crédito estacional para anfitriones
+# Base de datos MVP: adelanto estacional para anfitriones
 
 ## Idea central
 
-El producto ofrece una línea de crédito a anfitriones de alquiler temporario usando datos que una plataforma tipo Airbnb ya conoce: historial, reputación, propiedad, ingresos, reservas futuras y riesgo del destino.
+El producto ofrece un adelanto opt-in sobre cobros futuros a anfitriones de alquiler temporario usando datos que una plataforma tipo Airbnb ya conoce: historial, reputación, propiedad, ingresos, reservas futuras y riesgo del destino.
 
 El score se explica por clusters:
 
@@ -16,10 +16,10 @@ Score final =
 10% Riesgo del mercado
 ```
 
-El monto no sale solo del score. El monto sale de la capacidad de repago:
+El monto no sale solo del score. El monto sale de la capacidad de recuperación por payouts:
 
 ```text
-Monto máximo =
+Tope de adelanto =
 min(
   brecha de caja del host,
   ingreso futuro conservador x porcentaje retenible,
@@ -29,7 +29,20 @@ min(
 
 La frase de pitch:
 
-> No prestamos contra el promedio optimista. Prestamos contra un escenario conservador de ingresos futuros que la plataforma puede observar y recuperar mediante payouts.
+> No pedimos que Airbnb sea banco. Adelantamos una parte conservadora de cobros futuros que la plataforma puede observar y recuperar mediante retención transparente de próximos payouts.
+
+## Marco legal y reformulación de producto
+
+La versión "Airbnb presta plata" es frágil para pitch: Airbnb no es banco y una oferta habitual de crédito puede activar obligaciones regulatorias. Por eso la narrativa recomendada es **adelanto de cobros futuros**, no préstamo abierto.
+
+Principios de diseño:
+
+- El host opta dentro de la app y autoriza uso de datos, adelanto y retención de payouts.
+- El producto se recupera por compensación de futuros cobros dentro de la plataforma.
+- Para el MVP más defendible, priorizar reservas confirmadas y cobradas o altamente aseguradas.
+- Para montos mayores o adelantos sobre ingresos no confirmados, usar un partner regulado o validar registro propio como proveedor no financiero de crédito.
+
+Ver análisis completo en [`docs/legal_framework.md`](legal_framework.md).
 
 ## Archivos creados
 
@@ -67,7 +80,7 @@ Modela al anfitrión:
 - antigüedad
 - reservas completadas
 - verificaciones
-- créditos previos
+- adelantos previos
 - alertas de fraude
 - cantidad de propiedades activas
 
@@ -108,7 +121,7 @@ Guarda el score de cada host por cluster y una explicación humana.
 
 ### `credit_offers`
 
-Guarda la decisión final:
+Guarda la decisión final del adelanto:
 
 - aprobado, rechazado o línea piloto
 - score final
@@ -147,7 +160,7 @@ Resultado:
 - score 89
 - monto recomendado: ARS 2.500.000
 - retención: 28% de payouts futuros
-- stress test -30%: repago probable
+- stress test -30%: recuperación probable
 
 ### 2. El caso rechazado
 
@@ -166,11 +179,11 @@ Resultado:
 
 ### 3. El insight de producto
 
-Valentina, Buenos Aires, tiene muy buen score, pero recibe una línea menor porque su problema no es estacional. Esto muestra que el producto no solo pregunta "quién es buen pagador", sino también "quién necesita estabilización de ingresos".
+Valentina, Buenos Aires, tiene muy buen score, pero recibe un adelanto menor porque su problema no es estacional. Esto muestra que el producto no solo pregunta "quién es confiable", sino también "quién necesita estabilización de ingresos".
 
 ## Consultas SQL útiles
 
-Ranking de ofertas:
+Ranking de adelantos:
 
 ```sql
 SELECT
@@ -226,21 +239,103 @@ Para la demo visual, usar `backend/seed/demo_credit_data.json` y construir:
 1. selector de host
 2. curva de ingresos históricos
 3. barras de score por cluster
-4. oferta de crédito
+4. oferta de adelanto
 5. stress test de temporada
+
+## Métricas para el pitch
+
+Además de mostrar decisiones individuales, conviene mostrar métricas agregadas de cartera. Esto ayuda a responder si el producto es financieramente viable, no solo si el score "parece bueno".
+
+Sobre las ofertas base del dataset:
+
+```text
+Hosts analizados: 6
+Hosts con oferta positiva: 5
+Hosts rechazados: 1
+Capital recomendado: ARS 5.270.000
+Fee esperado: ARS 625.600
+Fee promedio ponderado: 11,9%
+Plazo promedio estimado: 3,2 meses
+Advance / ingreso futuro P10: 18-19%
+```
+
+La métrica clave es:
+
+```text
+Advance / P10 futuro
+```
+
+Esta métrica responde cuánto estamos adelantando contra el escenario conservador de ingresos futuros. En el piloto simulado está por debajo del 20%, lo que permite defender que el producto no presta contra un escenario optimista.
+
+Otra métrica útil es:
+
+```text
+Cobertura visible con reservas futuras
+```
+
+Indica qué porcentaje de la recuperación está respaldado por reservas ya confirmadas. Si no cubre 100%, no significa que el adelanto sea inválido: significa que el resto de la recuperación depende del flujo futuro estimado por P10, historial y control de payouts.
+
+## Unit economics
+
+La contribución esperada de cada adelanto se modela así:
+
+```text
+contribución =
+  ingreso por fee
+  - costo de fondeo
+  - pérdida esperada
+  - costo operativo
+```
+
+Donde:
+
+```text
+ingreso por fee = principal * fee
+costo de fondeo = principal * costo_fondeo_anual * meses / 12
+pérdida esperada = principal * PD * LGD
+costo operativo = principal * costo_operativo
+```
+
+Definiciones:
+
+```text
+PD = probabilidad de default
+LGD = pérdida dado default
+```
+
+La conclusión de negocio es importante:
+
+> El scoring reduce riesgo, pero el margen depende de tres palancas: fondeo barato, plazo corto de recuperación y retención automática sobre payouts.
+
+Por eso la demo incluye supuestos editables:
+
+- costo de fondeo anual
+- probabilidad de default
+- pérdida dado default
+- costo operativo
+
+También incluye sensibilidad en tres escenarios:
+
+```text
+Optimista: fondeo bajo, PD baja, LGD baja
+Base: supuestos elegidos por el usuario
+Stress: fondeo alto, PD alta, LGD alta
+```
+
+Esta sección es útil para explicar que el producto puede ser viable como infraestructura B2B si trabaja con una plataforma o partner financiero que tenga bajo costo de capital y control del flujo de cobro.
 
 ## Detalle técnico del motor de decisión
 
 El motor separa dos preguntas que suelen mezclarse:
 
 ```text
-1. ¿Debemos prestarle?
-2. ¿Cuánto podemos prestarle?
+1. ¿Debemos adelantarle cobros?
+2. ¿Cuánto flujo futuro podemos adelantar sin sobreexponer al host?
 ```
 
-La primera pregunta se responde con el score crediticio y reglas duras. La segunda se responde con capacidad de repago, ingresos futuros conservadores y porcentaje de retención sobre payouts.
+La primera pregunta se responde con el score de riesgo y reglas duras. La segunda se responde con capacidad de recuperación, ingresos futuros conservadores y porcentaje de retención sobre payouts.
 
-Esto evita un error común: aprobar mucho crédito solo porque el host tiene buen rating. Un host puede ser confiable, pero si no tiene flujo futuro suficiente, la oferta debe ser chica.
+Esto evita un error común: adelantar demasiado solo porque el host tiene buen rating. Un host puede ser confiable, pero si no tiene flujo futuro suficiente, la oferta debe ser chica.
 
 ## Pipeline de decisión
 
@@ -270,7 +365,7 @@ Cada cluster devuelve un puntaje de 0 a 100. El puntaje representa una dimensió
 | Calidad de la propiedad | 15% | Capacidad productiva del inmueble | Un buen activo genera más flujo futuro |
 | Historial de ingresos | 25% | Volumen, estabilidad y estacionalidad histórica | Es la mejor evidencia de capacidad económica |
 | Reputación y operación | 15% | Rating, cancelaciones, reclamos, respuesta | Anticipa deterioro de ingresos futuros |
-| Reservas futuras | 20% | Flujo observable de reservas confirmadas | Mejora recuperabilidad del crédito |
+| Reservas futuras | 20% | Flujo observable de reservas confirmadas | Mejora recuperabilidad del adelanto |
 | Riesgo del mercado | 10% | Riesgo externo del destino turístico | Ajusta por clima, regulación, demanda y competencia |
 
 Fórmula:
@@ -308,12 +403,12 @@ Antigüedad en plataforma       30%
 Reservas completadas           25%
 Verificaciones completas       15%
 Comportamiento en plataforma   20%
-Créditos previos               10%
+Adelantos previos              10%
 ```
 
 Justificación:
 
-Un host con muchos años, muchas reservas y verificaciones completas es más predecible. Si además ya tomó crédito y lo repagó, la plataforma tiene evidencia directa de comportamiento financiero.
+Un host con muchos años, muchas reservas y verificaciones completas es más predecible. Si además ya tomó adelantos y se recuperaron sin incidentes, la plataforma tiene evidencia directa de comportamiento financiero.
 
 ### Calidad de la propiedad
 
@@ -328,7 +423,7 @@ Disponibilidad calendario      10%
 
 Justificación:
 
-El crédito se repaga con ingresos futuros generados por la propiedad. Una propiedad con buena ubicación, calendario disponible y permiso vigente tiene mayor probabilidad de sostener ocupación y precio.
+El adelanto se recupera con ingresos futuros generados por la propiedad. Una propiedad con buena ubicación, calendario disponible y permiso vigente tiene mayor probabilidad de sostener ocupación y precio.
 
 ### Historial de ingresos
 
@@ -426,9 +521,9 @@ P90 = escenario optimista
 P10 = escenario conservador
 ```
 
-Para crédito, el MVP usa P10 porque queremos responder:
+Para adelantos, el MVP usa P10 porque queremos responder:
 
-> Si la temporada sale peor que lo normal, ¿todavía podemos recuperar el crédito?
+> Si la temporada sale peor que lo normal, ¿todavía podemos recuperar el adelanto sin salir a cobrar por fuera de la plataforma?
 
 En la UI y el simulador se puede aplicar una caída adicional:
 
@@ -461,10 +556,10 @@ Donde:
 ```text
 ingreso_futuro_ajustado = P10 futuro después de stress
 retencion_pct = porcentaje de payouts que la plataforma puede retener
-fee_pct = costo total del crédito
+fee_pct = costo total del adelanto
 ```
 
-La división por `(1 + fee_pct)` evita prestar un principal que después no se pueda recuperar cuando se suma el costo.
+La división por `(1 + fee_pct)` evita adelantar un principal que después no se pueda recuperar cuando se suma el costo.
 
 Ejemplo H001, temporada normal:
 
@@ -527,10 +622,10 @@ Interpretación:
 
 - `aprobado`: el modelo puede cubrir casi todo lo que pidió el host.
 - `aprobación parcial`: el host es viable, pero el pedido es demasiado alto para el escenario conservador.
-- `línea piloto`: hay algo de capacidad de repago, pero el riesgo pide un monto chico.
+- `línea piloto`: hay algo de capacidad de recuperación, pero el riesgo pide un monto chico.
 - `rechazado`: el score o la recuperabilidad no alcanzan.
 
-## 7. Repago visible con reservas futuras
+## 7. Recuperación visible con reservas futuras
 
 Además del monto máximo basado en P10, la demo calcula cuánto se podría cobrar usando solo reservas futuras ya visibles.
 
@@ -550,18 +645,18 @@ cobro_retenible =
   reserva_ajustada * retencion_pct
 ```
 
-Y el objetivo de repago es:
+Y el objetivo de recuperación es:
 
 ```text
-objetivo_repago =
+objetivo_recuperacion =
   monto_recomendado * (1 + fee_pct)
 ```
 
-Si la suma de cobros retenibles visibles supera el objetivo, el repago está cubierto con reservas ya confirmadas. Si no, el modelo asume que se requerirá flujo adicional futuro no confirmado.
+Si la suma de cobros retenibles visibles supera el objetivo, la recuperación está cubierta con reservas ya confirmadas. Si no, el modelo asume que se requerirá flujo adicional futuro no confirmado.
 
 Esto es importante para el pitch:
 
-> El crédito no depende solo de reservas futuras confirmadas. Las reservas confirmadas son la parte más segura del repago. El resto se respalda con historial, P10 y control de payouts.
+> El adelanto no depende solo de reservas futuras confirmadas. Las reservas confirmadas son la parte más segura de la recuperación. El resto se respalda con historial, P10 y control de payouts.
 
 ## 8. Stress testing
 
@@ -609,7 +704,7 @@ H005 Buenos Aires:
 score bueno + ingresos estables + menor estacionalidad -> monto chico
 ```
 
-Esto es defendible porque el producto no busca simplemente premiar buenos hosts. Busca estabilizar ingresos estacionales sin sobreendeudar.
+Esto es defendible porque el producto no busca simplemente premiar buenos hosts. Busca estabilizar ingresos estacionales sin sobreexponer al host ni convertir la plataforma en prestamista abierto.
 
 ## 10. Cómo justificar un rechazo
 
@@ -630,12 +725,12 @@ Decisión:
 score < 50 -> rechazado
 ```
 
-Aunque tenga una reserva futura, el historial no alcanza para convertir ese flujo en crédito responsable. En una versión real, podría recibir una línea piloto después de más reservas, permiso validado o mejora de reputación.
+Aunque tenga una reserva futura, el historial no alcanza para convertir ese flujo en adelanto responsable. En una versión real, podría recibir una línea piloto después de más reservas, permiso validado o mejora de reputación.
 
-## 11. Pseudocódigo de `ofrecer_credito`
+## 11. Pseudocódigo de `ofrecer_adelanto`
 
 ```python
-def ofrecer_credito(host, monto_solicitado, caida_temporada_pct):
+def ofrecer_adelanto(host, monto_solicitado, caida_temporada_pct):
     score = (
         host.host_solidity * 0.15 +
         host.property_quality * 0.15 +
@@ -685,7 +780,7 @@ El MVP simplifica varias cosas:
 - No se recalculan automáticamente las variables internas.
 - El ingreso P10 es un dato cargado, no estimado por modelo estadístico.
 - No hay costo de fondeo ni pérdida esperada por mora.
-- No hay regulación, KYC, contratos ni contabilidad.
+- No hay implementación de KYC, contratos, reporting regulatorio ni contabilidad.
 - La recuperación se estima solo con reservas visibles y P10 futuro.
 
-Estas simplificaciones son razonables para hackathon porque el objetivo es demostrar la lógica de underwriting y la propuesta de valor. En una versión productiva, el siguiente paso sería estimar P10/P50/P90 con series históricas reales, medir performance de repago y calibrar thresholds con datos.
+Estas simplificaciones son razonables para hackathon porque el objetivo es demostrar la lógica de underwriting y la propuesta de valor. En una versión productiva, el siguiente paso sería estimar P10/P50/P90 con series históricas reales, medir performance de recuperación y calibrar thresholds con datos.

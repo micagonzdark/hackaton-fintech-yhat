@@ -98,7 +98,10 @@ h2 {
 .chart-panel,
 .host-panel,
 .cluster-panel,
-.booking-panel {
+.booking-panel,
+.portfolio-panel,
+.unit-panel,
+.sensitivity-panel {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -166,6 +169,13 @@ h2 {
   display: grid;
   gap: 12px;
   grid-template-columns: 360px minmax(0, 1fr);
+}
+
+.portfolio-section {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.75fr) minmax(360px, 1fr);
+  margin-top: 12px;
 }
 
 .control-panel {
@@ -314,9 +324,18 @@ h2 {
 .chart-panel,
 .host-panel,
 .cluster-panel,
-.booking-panel {
+.booking-panel,
+.portfolio-panel,
+.unit-panel,
+.sensitivity-panel {
   min-height: 300px;
   padding: 16px;
+}
+
+.portfolio-panel,
+.unit-panel,
+.sensitivity-panel {
+  min-height: 250px;
 }
 
 .bar-chart {
@@ -480,9 +499,101 @@ h2 {
   font-weight: 850;
 }
 
+.portfolio-metrics {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.portfolio-metric {
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-height: 76px;
+  padding: 12px;
+}
+
+.portfolio-metric span {
+  color: var(--muted);
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.portfolio-metric strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.unit-economics {
+  display: grid;
+  gap: 8px;
+}
+
+.unit-row,
+.sensitivity-row {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 11px 12px;
+}
+
+.unit-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.unit-row span,
+.sensitivity-row span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.unit-row strong,
+.sensitivity-row strong {
+  font-size: 14px;
+  font-weight: 900;
+  text-align: right;
+}
+
+.unit-row.positive strong,
+.sensitivity-row.positive strong {
+  color: var(--green);
+}
+
+.unit-row.negative strong,
+.sensitivity-row.negative strong {
+  color: var(--red);
+}
+
+.sensitivity-table {
+  display: grid;
+  gap: 8px;
+}
+
+.sensitivity-row {
+  grid-template-columns: 82px minmax(0, 1fr) 112px 64px;
+}
+
+.sensitivity-row.header {
+  background: var(--surface-strong);
+  border-color: transparent;
+}
+
+.sensitivity-row.header span {
+  color: var(--text);
+}
+
 @media (max-width: 1100px) {
   .summary-grid,
   .workspace,
+  .portfolio-section,
   .panel-row,
   .panel-row.bottom {
     grid-template-columns: 1fr;
@@ -536,11 +647,23 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .portfolio-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .cluster-bar-row {
     grid-template-columns: 1fr;
   }
 
   .cluster-score {
+    text-align: left;
+  }
+
+  .sensitivity-row {
+    grid-template-columns: 1fr;
+  }
+
+  .sensitivity-row strong {
     text-align: left;
   }
 }

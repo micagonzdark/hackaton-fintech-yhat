@@ -36,9 +36,17 @@ const els = {
   seasonDrop: document.querySelector("#seasonDrop"),
   holdback: document.querySelector("#holdback"),
   fee: document.querySelector("#fee"),
+  fundingCost: document.querySelector("#fundingCost"),
+  defaultProbability: document.querySelector("#defaultProbability"),
+  lossGivenDefault: document.querySelector("#lossGivenDefault"),
+  operatingCost: document.querySelector("#operatingCost"),
   seasonDropOutput: document.querySelector("#seasonDropOutput"),
   holdbackOutput: document.querySelector("#holdbackOutput"),
   feeOutput: document.querySelector("#feeOutput"),
+  fundingCostOutput: document.querySelector("#fundingCostOutput"),
+  defaultProbabilityOutput: document.querySelector("#defaultProbabilityOutput"),
+  lossGivenDefaultOutput: document.querySelector("#lossGivenDefaultOutput"),
+  operatingCostOutput: document.querySelector("#operatingCostOutput"),
   clusterControls: document.querySelector("#clusterControls"),
   decisionValue: document.querySelector("#decisionValue"),
   riskBandValue: document.querySelector("#riskBandValue"),
@@ -57,6 +65,11 @@ const els = {
   hostFacts: document.querySelector("#hostFacts"),
   clusterBars: document.querySelector("#clusterBars"),
   futureBookings: document.querySelector("#futureBookings"),
+  portfolioCount: document.querySelector("#portfolioCount"),
+  portfolioMetrics: document.querySelector("#portfolioMetrics"),
+  portfolioMarginLabel: document.querySelector("#portfolioMarginLabel"),
+  unitEconomics: document.querySelector("#unitEconomics"),
+  sensitivityTable: document.querySelector("#sensitivityTable"),
   decisionPanel: document.querySelector(".decision-panel"),
 };
 
@@ -100,7 +113,7 @@ function riskBand(score) {
 function decisionLabel(decision) {
   const labels = {
     approved: "Aprobado",
-    partial: "Aprobacion parcial",
+    partial: "Aprobación parcial",
     pilot: "Línea piloto",
     rejected: "Rechazado",
   };
@@ -121,6 +134,15 @@ function getParams() {
     seasonDrop: Number(els.seasonDrop.value) || 0,
     holdback: Number(els.holdback.value) || 0,
     fee: Number(els.fee.value) || 0,
+  };
+}
+
+function getEconomicsParams() {
+  return {
+    fundingCost: Number(els.fundingCost.value) || 0,
+    defaultProbability: Number(els.defaultProbability.value) || 0,
+    lossGivenDefault: Number(els.lossGivenDefault.value) || 0,
+    operatingCost: Number(els.operatingCost.value) || 0,
   };
 }
 
@@ -157,6 +179,10 @@ function simulateOffer() {
 }
 
 function estimateVisibleRepayment(recommended, params) {
+  return estimateHostVisibleRepayment(selectedHost, recommended, params);
+}
+
+function estimateHostVisibleRepayment(host, recommended, params) {
   if (recommended <= 0) {
     return {
       coverage: 0,
@@ -171,7 +197,7 @@ function estimateVisibleRepayment(recommended, params) {
   let collected = 0;
   const months = new Set();
 
-  for (const booking of selectedHost.futureBookings) {
+  for (const booking of host.futureBookings) {
     const adjustedBooking =
       booking.grossValueArs *
       (1 - booking.cancellationRiskPct / 100) *
@@ -292,24 +318,30 @@ function render() {
   renderRevenueChart();
   renderClusterBars();
   renderFutureBookings(result);
+  renderPortfolio(result);
 }
 
 function renderOutputs(result) {
   els.seasonDropOutput.textContent = `${result.params.seasonDrop}%`;
   els.holdbackOutput.textContent = `${result.params.holdback}%`;
   els.feeOutput.textContent = `${result.params.fee}%`;
+  const economics = getEconomicsParams();
+  els.fundingCostOutput.textContent = `${economics.fundingCost}%`;
+  els.defaultProbabilityOutput.textContent = `${economics.defaultProbability}%`;
+  els.lossGivenDefaultOutput.textContent = `${economics.lossGivenDefault}%`;
+  els.operatingCostOutput.textContent = `${economics.operatingCost}%`;
 
   els.decisionValue.textContent = decisionLabel(result.decision);
   els.riskBandValue.textContent = `Riesgo ${riskBand(result.score)}`;
   els.scoreValue.textContent = result.score.toFixed(1);
   els.scoreMeter.style.width = `${Math.max(0, Math.min(result.score, 100))}%`;
   els.recommendedValue.textContent = formatMoney(result.recommended);
-  els.maxAdvanceValue.textContent = `Máximo simulado: ${formatMoney(result.maxAdvance)}`;
+  els.maxAdvanceValue.textContent = `Tope simulado: ${formatMoney(result.maxAdvance)}`;
 
   const repayment = result.repayment;
   if (result.recommended <= 0) {
     els.repaymentValue.textContent = "No aplica";
-    els.repaymentHint.textContent = "Sin oferta";
+    els.repaymentHint.textContent = "Sin adelanto";
   } else {
     els.repaymentValue.textContent = `${Math.round(repayment.coverage * 100)}%`;
     els.repaymentHint.textContent = repayment.fullyRepaid
@@ -394,7 +426,7 @@ function renderFutureBookings(result) {
         <div class="booking-item">
           <div>
             <strong>${checkin} al ${checkout}</strong>
-            <span>Payout ${booking.payoutDate} · ${formatMoney(booking.grossValueArs)}</span>
+            <span>Cobro ${booking.payoutDate} · ${formatMoney(booking.grossValueArs)}</span>
           </div>
           <div>
             <small>${booking.cancellationRiskPct}% riesgo</small>
@@ -404,6 +436,191 @@ function renderFutureBookings(result) {
       `;
     })
     .join("");
+}
+
+function buildPortfolio(result) {
+  return modelData.hosts
+    .map((host) => {
+      const offer = host.creditOffer;
+      const isSelected = host.hostId === selectedHost.hostId;
+      const params = isSelected
+        ? result.params
+        : {
+            fee: offer.feePct,
+            holdback: offer.holdbackPct,
+            seasonDrop: 0,
+          };
+      const principal = isSelected ? result.recommended : offer.recommendedAdvanceArs;
+      const score = isSelected ? result.score : offer.finalScore;
+      const p10 = isSelected ? result.params.futureRevenueP10 : offer.expectedFutureRevenueP10Ars;
+      const decision = isSelected ? result.decision : offer.decision;
+      const repayment = estimateHostVisibleRepayment(host, principal, params);
+
+      return {
+        hostId: host.hostId,
+        city: host.city,
+        decision,
+        score,
+        principal,
+        p10,
+        feePct: params.fee,
+        holdbackPct: params.holdback,
+        months: Math.max(1, offer.estimatedRepaymentMonths || repayment.months || 1),
+        feeIncome: principal * (params.fee / 100),
+        visibleCoverage: repayment.coverage,
+      };
+    })
+    .filter((item) => item.principal > 0);
+}
+
+function calculateEconomics(portfolio, assumptions) {
+  const totals = portfolio.reduce(
+    (acc, item) => {
+      const fundingCost =
+        item.principal * (assumptions.fundingCost / 100) * (item.months / 12);
+      const expectedLoss =
+        item.principal *
+        (assumptions.defaultProbability / 100) *
+        (assumptions.lossGivenDefault / 100);
+      const operatingCost = item.principal * (assumptions.operatingCost / 100);
+      const contribution = item.feeIncome - fundingCost - expectedLoss - operatingCost;
+
+      acc.principal += item.principal;
+      acc.p10 += item.p10;
+      acc.feeIncome += item.feeIncome;
+      acc.fundingCost += fundingCost;
+      acc.expectedLoss += expectedLoss;
+      acc.operatingCost += operatingCost;
+      acc.contribution += contribution;
+      acc.weightedHoldback += item.holdbackPct * item.principal;
+      acc.weightedMonths += item.months * item.principal;
+      acc.score += item.score;
+      acc.visibleCoverage += item.visibleCoverage;
+      return acc;
+    },
+    {
+      principal: 0,
+      p10: 0,
+      feeIncome: 0,
+      fundingCost: 0,
+      expectedLoss: 0,
+      operatingCost: 0,
+      contribution: 0,
+      weightedHoldback: 0,
+      weightedMonths: 0,
+      score: 0,
+      visibleCoverage: 0,
+    },
+  );
+
+  const count = portfolio.length || 1;
+  const principal = totals.principal || 1;
+
+  return {
+    ...totals,
+    count: portfolio.length,
+    rejectedCount: modelData.hosts.length - portfolio.length,
+    weightedFeePct: (totals.feeIncome / principal) * 100,
+    advanceToP10Pct: totals.p10 > 0 ? (totals.principal / totals.p10) * 100 : 0,
+    avgScore: totals.score / count,
+    avgVisibleCoveragePct: (totals.visibleCoverage / count) * 100,
+    avgHoldbackPct: totals.weightedHoldback / principal,
+    avgMonths: totals.weightedMonths / principal,
+    marginPct: (totals.contribution / principal) * 100,
+  };
+}
+
+function renderPortfolio(result) {
+  const portfolio = buildPortfolio(result);
+  const assumptions = getEconomicsParams();
+  const economics = calculateEconomics(portfolio, assumptions);
+
+  els.portfolioCount.textContent = `${portfolio.length}/${modelData.hosts.length} con oferta`;
+  els.portfolioMarginLabel.textContent = `Margen ${economics.marginPct.toFixed(1)}%`;
+
+  els.portfolioMetrics.innerHTML = [
+    ["Capital recomendado", formatMoney(economics.principal)],
+    ["Fee esperado", formatMoney(economics.feeIncome)],
+    ["Fee ponderado", `${economics.weightedFeePct.toFixed(1)}%`],
+    ["Advance / P10", `${economics.advanceToP10Pct.toFixed(1)}%`],
+    ["Retención prom.", `${economics.avgHoldbackPct.toFixed(1)}%`],
+    ["Plazo prom.", `${economics.avgMonths.toFixed(1)} meses`],
+    ["Cobertura visible", `${economics.avgVisibleCoveragePct.toFixed(0)}%`],
+    ["Score promedio", economics.avgScore.toFixed(1)],
+  ]
+    .map(([label, value]) => {
+      return `<div class="portfolio-metric"><span>${label}</span><strong>${value}</strong></div>`;
+    })
+    .join("");
+
+  els.unitEconomics.innerHTML = [
+    ["Ingreso por fee", economics.feeIncome, "positive"],
+    ["Costo de fondeo", -economics.fundingCost, "negative"],
+    ["Pérdida esperada", -economics.expectedLoss, "negative"],
+    ["Costo operativo", -economics.operatingCost, "negative"],
+    [
+      "Contribución neta",
+      economics.contribution,
+      economics.contribution >= 0 ? "positive" : "negative",
+    ],
+  ]
+    .map(([label, value, tone]) => {
+      return `
+        <div class="unit-row ${tone}">
+          <span>${label}</span>
+          <strong>${formatMoney(value)}</strong>
+        </div>
+      `;
+    })
+    .join("");
+
+  renderSensitivityTable(portfolio, assumptions);
+}
+
+function renderSensitivityTable(portfolio, baseAssumptions) {
+  const scenarios = [
+    {
+      name: "Optimista",
+      fundingCost: 20,
+      defaultProbability: 3,
+      lossGivenDefault: 25,
+      operatingCost: baseAssumptions.operatingCost,
+    },
+    {
+      name: "Base",
+      ...baseAssumptions,
+    },
+    {
+      name: "Stress",
+      fundingCost: 45,
+      defaultProbability: 10,
+      lossGivenDefault: 50,
+      operatingCost: Math.max(baseAssumptions.operatingCost, 2),
+    },
+  ];
+
+  els.sensitivityTable.innerHTML = `
+    <div class="sensitivity-row header">
+      <span>Escenario</span>
+      <span>Supuestos</span>
+      <span>Contribución</span>
+      <span>Margen</span>
+    </div>
+    ${scenarios
+      .map((scenario) => {
+        const econ = calculateEconomics(portfolio, scenario);
+        const tone = econ.contribution >= 0 ? "positive" : "negative";
+        return `
+          <div class="sensitivity-row ${tone}">
+            <span>${scenario.name}</span>
+            <span>Fondeo ${scenario.fundingCost}% · PD ${scenario.defaultProbability}% · LGD ${scenario.lossGivenDefault}%</span>
+            <strong>${formatMoney(econ.contribution)}</strong>
+            <strong>${econ.marginPct.toFixed(1)}%</strong>
+          </div>
+        `;
+      })
+      .join("")}
+  `;
 }
 
 function bindEvents() {
@@ -416,6 +633,10 @@ function bindEvents() {
     els.seasonDrop,
     els.holdback,
     els.fee,
+    els.fundingCost,
+    els.defaultProbability,
+    els.lossGivenDefault,
+    els.operatingCost,
   ].forEach((input) => input.addEventListener("input", render));
 }
 

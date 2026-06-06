@@ -1,10 +1,10 @@
 {
   "metadata": {
     "project": "Renta Estable",
-    "description": "Dataset sintético para demo de underwriting estacional de anfitriones tipo Airbnb.",
+    "description": "Dataset sintético para demo de adelanto estacional de anfitriones tipo Airbnb.",
     "generatedAt": "2026-06-05",
     "currency": "ARS",
-    "disclaimer": "Datos ficticios modelados para hackathon. No representan informacion real de Airbnb ni de ningun host."
+    "disclaimer": "Datos ficticios modelados para hackathon. No representan información real de Airbnb ni de ningún host."
   },
   "scoreModel": {
     "clusters": [
@@ -17,7 +17,7 @@
           { "key": "completed_bookings", "name": "Reservas completadas", "weightPct": 25 },
           { "key": "identity_tax_bank_verified", "name": "Verificaciones completas", "weightPct": 15 },
           { "key": "platform_behavior", "name": "Comportamiento en plataforma", "weightPct": 20 },
-          { "key": "prior_credit_behavior", "name": "Créditos previos", "weightPct": 10 }
+          { "key": "prior_credit_behavior", "name": "Adelantos previos", "weightPct": 10 }
         ]
       },
       {
@@ -91,9 +91,9 @@
       { "minScore": 50, "label": "revisión manual", "description": "Faltan señales o hay riesgo operativo." },
       { "minScore": 0, "label": "rechazado", "description": "Riesgo alto o reglas excluyentes." }
     ],
-    "creditFormula": {
+    "advanceFormula": {
       "maxAdvance": "min(cashflow_gap, expected_future_revenue_p10 * holdback_pct / (1 + fee_pct), policy_cap)",
-      "principle": "No se presta contra el promedio optimista, sino contra un escenario conservador de ingresos futuros."
+      "principle": "No se adelanta contra el promedio optimista, sino contra un escenario conservador de ingresos futuros retenibles."
     }
   },
   "markets": [
@@ -250,8 +250,8 @@
         "feePct": 10,
         "holdbackPct": 28,
         "estimatedRepaymentMonths": 3,
-        "stressDown30": "repago probable",
-        "stressDown50": "repago con extensión",
+        "stressDown30": "recuperación probable",
+        "stressDown50": "recuperación con extensión",
         "mainReasons": ["8.7 años de historial", "486 reservas completas", "rating 4.92", "reservas fuertes de invierno"]
       }
     },
@@ -333,7 +333,7 @@
         "feePct": 14,
         "holdbackPct": 32,
         "estimatedRepaymentMonths": 4,
-        "stressDown30": "repago probable",
+        "stressDown30": "recuperación probable",
         "stressDown50": "riesgo parcial",
         "mainReasons": ["5.2 años de historial", "verano muy fuerte", "reservas futuras lejanas", "alta estacionalidad costera"]
       }
@@ -416,8 +416,8 @@
         "feePct": 12,
         "holdbackPct": 22,
         "estimatedRepaymentMonths": 3,
-        "stressDown30": "repago probable",
-        "stressDown50": "repago probable con menor margen",
+        "stressDown30": "recuperación probable",
+        "stressDown50": "recuperación probable con menor margen",
         "mainReasons": ["ingresos estables", "buena reputación", "menor necesidad estacional", "destino diversificado"]
       }
     },
@@ -505,7 +505,7 @@
     {
       "hostId": "H005",
       "displayName": "Valentina - Loft Palermo",
-      "persona": "Host urbana excelente con ingresos constantes, más apta para línea chica que para smoothing estacional.",
+      "persona": "Host urbana excelente con ingresos constantes, más apta para adelanto chico que para smoothing estacional.",
       "city": "Buenos Aires",
       "profile": {
         "hostTenureYears": 6.5,
@@ -580,8 +580,8 @@
         "feePct": 11,
         "holdbackPct": 18,
         "estimatedRepaymentMonths": 2,
-        "stressDown30": "repago probable",
-        "stressDown50": "repago probable",
+        "stressDown30": "recuperación probable",
+        "stressDown50": "recuperación probable",
         "mainReasons": ["host excelente", "ingresos estables", "baja necesidad de smoothing", "riesgo regulatorio urbano más alto"]
       }
     },

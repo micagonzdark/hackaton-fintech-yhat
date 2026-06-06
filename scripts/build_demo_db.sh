@@ -9,4 +9,4 @@ sqlite3 "${DB_PATH}" < "${SCHEMA_PATH}"
 
 echo "Demo database created at ${DB_PATH}"
 echo "Example:"
-echo "sqlite3 ${DB_PATH} \"SELECT h.display_name, o.final_score, o.decision, o.recommended_advance_ars FROM credit_offers o JOIN hosts h ON h.host_id = o.host_id ORDER BY o.final_score DESC;\""
+echo "sqlite3 ${DB_PATH} \"SELECT h.display_name, o.final_score, o.decision, o.recommended_advance_ars AS adelanto_recomendado FROM credit_offers o JOIN hosts h ON h.host_id = o.host_id ORDER BY o.final_score DESC;\""

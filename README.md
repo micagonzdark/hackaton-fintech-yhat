@@ -2,11 +2,11 @@
 
 ## Descripción
 
-> Completar con la descripción del proyecto.
+Renta Estable es una demo de adelanto estacional para anfitriones de alquiler temporario. Usa datos de plataforma tipo Airbnb para estimar cuánto cobro futuro puede adelantarse y recuperarse mediante retención transparente de próximos payouts.
 
 ## Problema que resuelve
 
-> Completar con el problema y la solución propuesta.
+Los anfitriones de destinos estacionales tienen gastos antes de la temporada alta, pero sus ingresos llegan después de las reservas. La solución adelanta parte de esos cobros futuros sin presentar a la plataforma como banco: el host acepta un fee y una retención limitada de futuros payouts dentro de la app.
 
 ## Equipo
 
