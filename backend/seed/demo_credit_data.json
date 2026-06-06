@@ -1,0 +1,671 @@
+{
+  "metadata": {
+    "project": "Renta Estable",
+    "description": "Dataset sintético para demo de underwriting estacional de anfitriones tipo Airbnb.",
+    "generatedAt": "2026-06-05",
+    "currency": "ARS",
+    "disclaimer": "Datos ficticios modelados para hackathon. No representan informacion real de Airbnb ni de ningun host."
+  },
+  "scoreModel": {
+    "clusters": [
+      {
+        "key": "host_solidity",
+        "name": "Solidez del host",
+        "weightPct": 15,
+        "variables": [
+          { "key": "host_tenure_years", "name": "Antigüedad en plataforma", "weightPct": 30 },
+          { "key": "completed_bookings", "name": "Reservas completadas", "weightPct": 25 },
+          { "key": "identity_tax_bank_verified", "name": "Verificaciones completas", "weightPct": 15 },
+          { "key": "platform_behavior", "name": "Comportamiento en plataforma", "weightPct": 20 },
+          { "key": "prior_credit_behavior", "name": "Créditos previos", "weightPct": 10 }
+        ]
+      },
+      {
+        "key": "property_quality",
+        "name": "Calidad de la propiedad",
+        "weightPct": 15,
+        "variables": [
+          { "key": "location_score", "name": "Ubicación", "weightPct": 25 },
+          { "key": "capacity_property_type", "name": "Tipo y capacidad", "weightPct": 20 },
+          { "key": "amenities_score", "name": "Amenities", "weightPct": 15 },
+          { "key": "listing_quality_score", "name": "Calidad del listing", "weightPct": 15 },
+          { "key": "legal_permit_status", "name": "Habilitación legal", "weightPct": 15 },
+          { "key": "calendar_availability", "name": "Disponibilidad calendario", "weightPct": 10 }
+        ]
+      },
+      {
+        "key": "income_history",
+        "name": "Historial de ingresos",
+        "weightPct": 25,
+        "variables": [
+          { "key": "revenue_24_36m", "name": "Ingresos 24/36 meses", "weightPct": 25 },
+          { "key": "seasonal_consistency", "name": "Consistencia estacional", "weightPct": 25 },
+          { "key": "revenue_volatility", "name": "Volatilidad", "weightPct": 20 },
+          { "key": "occupancy_history", "name": "Ocupación histórica", "weightPct": 15 },
+          { "key": "average_daily_rate", "name": "Precio promedio noche", "weightPct": 10 },
+          { "key": "growth_trend", "name": "Tendencia", "weightPct": 5 }
+        ]
+      },
+      {
+        "key": "reputation_ops",
+        "name": "Reputación y operación",
+        "weightPct": 15,
+        "variables": [
+          { "key": "average_rating", "name": "Rating promedio", "weightPct": 25 },
+          { "key": "reviews_count", "name": "Cantidad de reviews", "weightPct": 15 },
+          { "key": "rating_trend", "name": "Tendencia rating", "weightPct": 15 },
+          { "key": "cancellation_rate", "name": "Tasa de cancelación", "weightPct": 20 },
+          { "key": "refund_dispute_rate", "name": "Reembolsos y disputas", "weightPct": 15 },
+          { "key": "response_rate", "name": "Respuesta del host", "weightPct": 10 }
+        ]
+      },
+      {
+        "key": "future_bookings",
+        "name": "Reservas futuras",
+        "weightPct": 20,
+        "variables": [
+          { "key": "confirmed_value", "name": "Valor confirmado", "weightPct": 35 },
+          { "key": "future_occupancy", "name": "Ocupación futura", "weightPct": 20 },
+          { "key": "payout_schedule", "name": "Fechas de payout", "weightPct": 15 },
+          { "key": "cancellation_risk", "name": "Riesgo de cancelación", "weightPct": 15 },
+          { "key": "booking_lead_time", "name": "Anticipación de reserva", "weightPct": 15 }
+        ]
+      },
+      {
+        "key": "market_risk",
+        "name": "Riesgo del mercado",
+        "weightPct": 10,
+        "variables": [
+          { "key": "destination_seasonality", "name": "Estacionalidad destino", "weightPct": 25 },
+          { "key": "local_demand", "name": "Demanda turística", "weightPct": 25 },
+          { "key": "supply_growth", "name": "Crecimiento oferta", "weightPct": 20 },
+          { "key": "weather_events", "name": "Clima y eventos", "weightPct": 15 },
+          { "key": "local_regulation", "name": "Regulación local", "weightPct": 15 }
+        ]
+      }
+    ],
+    "decisionBands": [
+      { "minScore": 85, "label": "aprobado alto", "description": "Monto alto, fee bajo, retención moderada." },
+      { "minScore": 75, "label": "aprobado medio", "description": "Monto medio, fee estandar, stress test obligatorio." },
+      { "minScore": 65, "label": "aprobado bajo", "description": "Monto conservador o línea piloto." },
+      { "minScore": 50, "label": "revisión manual", "description": "Faltan señales o hay riesgo operativo." },
+      { "minScore": 0, "label": "rechazado", "description": "Riesgo alto o reglas excluyentes." }
+    ],
+    "creditFormula": {
+      "maxAdvance": "min(cashflow_gap, expected_future_revenue_p10 * holdback_pct / (1 + fee_pct), policy_cap)",
+      "principle": "No se presta contra el promedio optimista, sino contra un escenario conservador de ingresos futuros."
+    }
+  },
+  "markets": [
+    {
+      "city": "Bariloche",
+      "province": "Rio Negro",
+      "destinationType": "montaña_nieve",
+      "highSeasonMonths": ["jun", "jul", "aug", "jan", "feb"],
+      "seasonalityIndex": 0.78,
+      "demandIndex": 88,
+      "supplyGrowthPct": 8.5,
+      "weatherRisk": 62,
+      "regulationRisk": 42,
+      "tourismTrendPct": 6
+    },
+    {
+      "city": "Mar del Plata",
+      "province": "Buenos Aires",
+      "destinationType": "costa",
+      "highSeasonMonths": ["dec", "jan", "feb"],
+      "seasonalityIndex": 0.86,
+      "demandIndex": 82,
+      "supplyGrowthPct": 11,
+      "weatherRisk": 40,
+      "regulationRisk": 52,
+      "tourismTrendPct": 3
+    },
+    {
+      "city": "Mendoza",
+      "province": "Mendoza",
+      "destinationType": "vino_ciudad",
+      "highSeasonMonths": ["mar", "apr", "jul", "oct", "nov"],
+      "seasonalityIndex": 0.42,
+      "demandIndex": 76,
+      "supplyGrowthPct": 6,
+      "weatherRisk": 28,
+      "regulationRisk": 35,
+      "tourismTrendPct": 5
+    },
+    {
+      "city": "Villa Gesell",
+      "province": "Buenos Aires",
+      "destinationType": "costa",
+      "highSeasonMonths": ["dec", "jan", "feb"],
+      "seasonalityIndex": 0.91,
+      "demandIndex": 68,
+      "supplyGrowthPct": 14,
+      "weatherRisk": 45,
+      "regulationRisk": 55,
+      "tourismTrendPct": 1
+    },
+    {
+      "city": "Buenos Aires",
+      "province": "CABA",
+      "destinationType": "urbano",
+      "highSeasonMonths": ["mar", "apr", "oct", "nov"],
+      "seasonalityIndex": 0.25,
+      "demandIndex": 86,
+      "supplyGrowthPct": 9,
+      "weatherRisk": 18,
+      "regulationRisk": 70,
+      "tourismTrendPct": 4.5
+    },
+    {
+      "city": "Ushuaia",
+      "province": "Tierra del Fuego",
+      "destinationType": "montaña_nieve_naturaleza",
+      "highSeasonMonths": ["jul", "aug", "jan", "feb"],
+      "seasonalityIndex": 0.72,
+      "demandIndex": 72,
+      "supplyGrowthPct": 7.5,
+      "weatherRisk": 75,
+      "regulationRisk": 45,
+      "tourismTrendPct": 4
+    }
+  ],
+  "hosts": [
+    {
+      "hostId": "H001",
+      "displayName": "Lucía - Cabaña Cerro Catedral",
+      "persona": "Host histórica de montaña con ingresos muy predecibles en invierno.",
+      "city": "Bariloche",
+      "profile": {
+        "hostTenureYears": 8.7,
+        "completedBookings": 486,
+        "identityVerified": true,
+        "taxInfoVerified": true,
+        "bankAccountVerified": true,
+        "priorPlatformLoans": 2,
+        "priorLoansRepaid": 2,
+        "fraudFlags": 0,
+        "accountSuspensionCount": 0,
+        "activeListingsCount": 2
+      },
+      "listing": {
+        "listingId": "L001",
+        "title": "Cabaña premium cerca del Cerro Catedral",
+        "propertyType": "cabaña",
+        "capacityGuests": 6,
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "amenitiesScore": 92,
+        "listingQualityScore": 88,
+        "legalPermitStatus": "verified",
+        "calendarAvailableDays12m": 258,
+        "relativePriceVsMarket": 1.08
+      },
+      "reputation": {
+        "averageRating": 4.92,
+        "reviewsCount": 412,
+        "ratingTrend6m": 0.03,
+        "cancellationRatePct": 0.8,
+        "refundRatePct": 1.1,
+        "disputeRatePct": 0.2,
+        "responseRatePct": 99,
+        "responseTimeHours": 1.4
+      },
+      "monthlyRevenue": [
+        { "month": "2025-06", "grossRevenueArs": 1320000, "netRevenueArs": 1190000, "bookedNights": 16, "availableNights": 24, "averageDailyRateArs": 82500 },
+        { "month": "2025-07", "grossRevenueArs": 3400000, "netRevenueArs": 3060000, "bookedNights": 27, "availableNights": 29, "averageDailyRateArs": 125900 },
+        { "month": "2025-08", "grossRevenueArs": 3100000, "netRevenueArs": 2790000, "bookedNights": 25, "availableNights": 29, "averageDailyRateArs": 124000 },
+        { "month": "2025-09", "grossRevenueArs": 1600000, "netRevenueArs": 1440000, "bookedNights": 18, "availableNights": 27, "averageDailyRateArs": 88900 },
+        { "month": "2025-10", "grossRevenueArs": 900000, "netRevenueArs": 810000, "bookedNights": 11, "availableNights": 25, "averageDailyRateArs": 81800 },
+        { "month": "2025-11", "grossRevenueArs": 700000, "netRevenueArs": 630000, "bookedNights": 9, "availableNights": 24, "averageDailyRateArs": 77800 },
+        { "month": "2025-12", "grossRevenueArs": 1400000, "netRevenueArs": 1260000, "bookedNights": 16, "availableNights": 25, "averageDailyRateArs": 87500 },
+        { "month": "2026-01", "grossRevenueArs": 2500000, "netRevenueArs": 2250000, "bookedNights": 24, "availableNights": 28, "averageDailyRateArs": 104200 },
+        { "month": "2026-02", "grossRevenueArs": 2000000, "netRevenueArs": 1800000, "bookedNights": 21, "availableNights": 26, "averageDailyRateArs": 95200 },
+        { "month": "2026-03", "grossRevenueArs": 1000000, "netRevenueArs": 900000, "bookedNights": 12, "availableNights": 25, "averageDailyRateArs": 83300 },
+        { "month": "2026-04", "grossRevenueArs": 550000, "netRevenueArs": 495000, "bookedNights": 7, "availableNights": 24, "averageDailyRateArs": 78600 },
+        { "month": "2026-05", "grossRevenueArs": 450000, "netRevenueArs": 405000, "bookedNights": 6, "availableNights": 24, "averageDailyRateArs": 75000 }
+      ],
+      "futureBookings": [
+        { "bookingId": "B001", "checkinDate": "2026-07-05", "checkoutDate": "2026-07-12", "payoutDate": "2026-07-06", "grossValueArs": 980000, "cancellationRiskPct": 5 },
+        { "bookingId": "B002", "checkinDate": "2026-07-18", "checkoutDate": "2026-07-27", "payoutDate": "2026-07-19", "grossValueArs": 1380000, "cancellationRiskPct": 4 },
+        { "bookingId": "B003", "checkinDate": "2026-08-02", "checkoutDate": "2026-08-12", "payoutDate": "2026-08-03", "grossValueArs": 1470000, "cancellationRiskPct": 6 },
+        { "bookingId": "B004", "checkinDate": "2026-08-15", "checkoutDate": "2026-08-23", "payoutDate": "2026-08-16", "grossValueArs": 1140000, "cancellationRiskPct": 6.5 }
+      ],
+      "clusterScores": {
+        "hostSolidity": 96,
+        "propertyQuality": 88,
+        "incomeHistory": 91,
+        "reputationOps": 94,
+        "futureBookings": 86,
+        "marketRisk": 74
+      },
+      "creditOffer": {
+        "requestedAmountArs": 2800000,
+        "finalScore": 89,
+        "riskBand": "bajo",
+        "decision": "approved",
+        "expectedFutureRevenueP10Ars": 11800000,
+        "maxAdvanceArs": 3200000,
+        "recommendedAdvanceArs": 2500000,
+        "feePct": 10,
+        "holdbackPct": 28,
+        "estimatedRepaymentMonths": 3,
+        "stressDown30": "repago probable",
+        "stressDown50": "repago con extensión",
+        "mainReasons": ["8.7 años de historial", "486 reservas completas", "rating 4.92", "reservas fuertes de invierno"]
+      }
+    },
+    {
+      "hostId": "H002",
+      "displayName": "Martín - Depto Playa Grande",
+      "persona": "Host costero con temporada de verano muy fuerte y baja pronunciada.",
+      "city": "Mar del Plata",
+      "profile": {
+        "hostTenureYears": 5.2,
+        "completedBookings": 231,
+        "identityVerified": true,
+        "taxInfoVerified": true,
+        "bankAccountVerified": true,
+        "priorPlatformLoans": 1,
+        "priorLoansRepaid": 1,
+        "fraudFlags": 0,
+        "accountSuspensionCount": 0,
+        "activeListingsCount": 1
+      },
+      "listing": {
+        "listingId": "L002",
+        "title": "Departamento familiar en Playa Grande",
+        "propertyType": "departamento",
+        "capacityGuests": 4,
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "amenitiesScore": 81,
+        "listingQualityScore": 79,
+        "legalPermitStatus": "verified",
+        "calendarAvailableDays12m": 242,
+        "relativePriceVsMarket": 0.97
+      },
+      "reputation": {
+        "averageRating": 4.76,
+        "reviewsCount": 198,
+        "ratingTrend6m": -0.02,
+        "cancellationRatePct": 2.2,
+        "refundRatePct": 2.4,
+        "disputeRatePct": 0.6,
+        "responseRatePct": 95,
+        "responseTimeHours": 3.2
+      },
+      "monthlyRevenue": [
+        { "month": "2025-06", "grossRevenueArs": 250000, "netRevenueArs": 225000, "bookedNights": 5, "availableNights": 23, "averageDailyRateArs": 50000 },
+        { "month": "2025-07", "grossRevenueArs": 360000, "netRevenueArs": 324000, "bookedNights": 7, "availableNights": 24, "averageDailyRateArs": 51400 },
+        { "month": "2025-08", "grossRevenueArs": 320000, "netRevenueArs": 288000, "bookedNights": 6, "availableNights": 24, "averageDailyRateArs": 53300 },
+        { "month": "2025-09", "grossRevenueArs": 380000, "netRevenueArs": 342000, "bookedNights": 7, "availableNights": 24, "averageDailyRateArs": 54300 },
+        { "month": "2025-10", "grossRevenueArs": 550000, "netRevenueArs": 495000, "bookedNights": 10, "availableNights": 24, "averageDailyRateArs": 55000 },
+        { "month": "2025-11", "grossRevenueArs": 850000, "netRevenueArs": 765000, "bookedNights": 14, "availableNights": 25, "averageDailyRateArs": 60700 },
+        { "month": "2025-12", "grossRevenueArs": 1800000, "netRevenueArs": 1620000, "bookedNights": 22, "availableNights": 27, "averageDailyRateArs": 81800 },
+        { "month": "2026-01", "grossRevenueArs": 4200000, "netRevenueArs": 3780000, "bookedNights": 29, "availableNights": 30, "averageDailyRateArs": 144800 },
+        { "month": "2026-02", "grossRevenueArs": 3200000, "netRevenueArs": 2880000, "bookedNights": 24, "availableNights": 26, "averageDailyRateArs": 133300 },
+        { "month": "2026-03", "grossRevenueArs": 1100000, "netRevenueArs": 990000, "bookedNights": 14, "availableNights": 25, "averageDailyRateArs": 78600 },
+        { "month": "2026-04", "grossRevenueArs": 480000, "netRevenueArs": 432000, "bookedNights": 8, "availableNights": 24, "averageDailyRateArs": 60000 },
+        { "month": "2026-05", "grossRevenueArs": 280000, "netRevenueArs": 252000, "bookedNights": 5, "availableNights": 23, "averageDailyRateArs": 56000 }
+      ],
+      "futureBookings": [
+        { "bookingId": "B005", "checkinDate": "2026-12-26", "checkoutDate": "2027-01-03", "payoutDate": "2026-12-27", "grossValueArs": 1680000, "cancellationRiskPct": 12 },
+        { "bookingId": "B006", "checkinDate": "2027-01-05", "checkoutDate": "2027-01-14", "payoutDate": "2027-01-06", "grossValueArs": 2160000, "cancellationRiskPct": 11 },
+        { "bookingId": "B007", "checkinDate": "2027-02-01", "checkoutDate": "2027-02-10", "payoutDate": "2027-02-02", "grossValueArs": 1710000, "cancellationRiskPct": 13 }
+      ],
+      "clusterScores": {
+        "hostSolidity": 82,
+        "propertyQuality": 80,
+        "incomeHistory": 76,
+        "reputationOps": 78,
+        "futureBookings": 69,
+        "marketRisk": 66
+      },
+      "creditOffer": {
+        "requestedAmountArs": 1800000,
+        "finalScore": 75.4,
+        "riskBand": "medio",
+        "decision": "approved",
+        "expectedFutureRevenueP10Ars": 5200000,
+        "maxAdvanceArs": 1700000,
+        "recommendedAdvanceArs": 1150000,
+        "feePct": 14,
+        "holdbackPct": 32,
+        "estimatedRepaymentMonths": 4,
+        "stressDown30": "repago probable",
+        "stressDown50": "riesgo parcial",
+        "mainReasons": ["5.2 años de historial", "verano muy fuerte", "reservas futuras lejanas", "alta estacionalidad costera"]
+      }
+    },
+    {
+      "hostId": "H003",
+      "displayName": "Sofía - Casa Chacras",
+      "persona": "Host con ingresos más estables, buena reputación y menor necesidad de smoothing.",
+      "city": "Mendoza",
+      "profile": {
+        "hostTenureYears": 4.1,
+        "completedBookings": 178,
+        "identityVerified": true,
+        "taxInfoVerified": true,
+        "bankAccountVerified": true,
+        "priorPlatformLoans": 0,
+        "priorLoansRepaid": 0,
+        "fraudFlags": 0,
+        "accountSuspensionCount": 0,
+        "activeListingsCount": 1
+      },
+      "listing": {
+        "listingId": "L003",
+        "title": "Casa con patio en Chacras de Coria",
+        "propertyType": "casa",
+        "capacityGuests": 5,
+        "bedrooms": 2,
+        "bathrooms": 2,
+        "amenitiesScore": 86,
+        "listingQualityScore": 84,
+        "legalPermitStatus": "verified",
+        "calendarAvailableDays12m": 276,
+        "relativePriceVsMarket": 1.03
+      },
+      "reputation": {
+        "averageRating": 4.84,
+        "reviewsCount": 155,
+        "ratingTrend6m": 0.01,
+        "cancellationRatePct": 1.5,
+        "refundRatePct": 1.7,
+        "disputeRatePct": 0.3,
+        "responseRatePct": 97,
+        "responseTimeHours": 2.1
+      },
+      "monthlyRevenue": [
+        { "month": "2025-06", "grossRevenueArs": 900000, "netRevenueArs": 810000, "bookedNights": 13, "availableNights": 26, "averageDailyRateArs": 69200 },
+        { "month": "2025-07", "grossRevenueArs": 1200000, "netRevenueArs": 1080000, "bookedNights": 17, "availableNights": 27, "averageDailyRateArs": 70600 },
+        { "month": "2025-08", "grossRevenueArs": 1050000, "netRevenueArs": 945000, "bookedNights": 15, "availableNights": 26, "averageDailyRateArs": 70000 },
+        { "month": "2025-09", "grossRevenueArs": 980000, "netRevenueArs": 882000, "bookedNights": 14, "availableNights": 25, "averageDailyRateArs": 70000 },
+        { "month": "2025-10", "grossRevenueArs": 1350000, "netRevenueArs": 1215000, "bookedNights": 19, "availableNights": 27, "averageDailyRateArs": 71100 },
+        { "month": "2025-11", "grossRevenueArs": 1450000, "netRevenueArs": 1305000, "bookedNights": 20, "availableNights": 27, "averageDailyRateArs": 72500 },
+        { "month": "2025-12", "grossRevenueArs": 1250000, "netRevenueArs": 1125000, "bookedNights": 17, "availableNights": 26, "averageDailyRateArs": 73500 },
+        { "month": "2026-01", "grossRevenueArs": 1150000, "netRevenueArs": 1035000, "bookedNights": 16, "availableNights": 26, "averageDailyRateArs": 71900 },
+        { "month": "2026-02", "grossRevenueArs": 1020000, "netRevenueArs": 918000, "bookedNights": 14, "availableNights": 25, "averageDailyRateArs": 72900 },
+        { "month": "2026-03", "grossRevenueArs": 1550000, "netRevenueArs": 1395000, "bookedNights": 21, "availableNights": 28, "averageDailyRateArs": 73800 },
+        { "month": "2026-04", "grossRevenueArs": 1480000, "netRevenueArs": 1332000, "bookedNights": 20, "availableNights": 27, "averageDailyRateArs": 74000 },
+        { "month": "2026-05", "grossRevenueArs": 980000, "netRevenueArs": 882000, "bookedNights": 14, "availableNights": 25, "averageDailyRateArs": 70000 }
+      ],
+      "futureBookings": [
+        { "bookingId": "B008", "checkinDate": "2026-07-10", "checkoutDate": "2026-07-17", "payoutDate": "2026-07-11", "grossValueArs": 630000, "cancellationRiskPct": 8 },
+        { "bookingId": "B009", "checkinDate": "2026-10-03", "checkoutDate": "2026-10-10", "payoutDate": "2026-10-04", "grossValueArs": 700000, "cancellationRiskPct": 7 },
+        { "bookingId": "B010", "checkinDate": "2026-11-14", "checkoutDate": "2026-11-21", "payoutDate": "2026-11-15", "grossValueArs": 735000, "cancellationRiskPct": 7 }
+      ],
+      "clusterScores": {
+        "hostSolidity": 77,
+        "propertyQuality": 84,
+        "incomeHistory": 80,
+        "reputationOps": 86,
+        "futureBookings": 62,
+        "marketRisk": 78
+      },
+      "creditOffer": {
+        "requestedAmountArs": 1000000,
+        "finalScore": 77.2,
+        "riskBand": "medio_bajo",
+        "decision": "approved",
+        "expectedFutureRevenueP10Ars": 4100000,
+        "maxAdvanceArs": 1200000,
+        "recommendedAdvanceArs": 700000,
+        "feePct": 12,
+        "holdbackPct": 22,
+        "estimatedRepaymentMonths": 3,
+        "stressDown30": "repago probable",
+        "stressDown50": "repago probable con menor margen",
+        "mainReasons": ["ingresos estables", "buena reputación", "menor necesidad estacional", "destino diversificado"]
+      }
+    },
+    {
+      "hostId": "H004",
+      "displayName": "Nicolás - Monoambiente Nuevo",
+      "persona": "Host nuevo con permiso pendiente, poco historial y alta volatilidad.",
+      "city": "Villa Gesell",
+      "profile": {
+        "hostTenureYears": 0.8,
+        "completedBookings": 19,
+        "identityVerified": true,
+        "taxInfoVerified": false,
+        "bankAccountVerified": true,
+        "priorPlatformLoans": 0,
+        "priorLoansRepaid": 0,
+        "fraudFlags": 0,
+        "accountSuspensionCount": 0,
+        "activeListingsCount": 1
+      },
+      "listing": {
+        "listingId": "L004",
+        "title": "Monoambiente a 4 cuadras del mar",
+        "propertyType": "monoambiente",
+        "capacityGuests": 2,
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "amenitiesScore": 58,
+        "listingQualityScore": 62,
+        "legalPermitStatus": "pending",
+        "calendarAvailableDays12m": 180,
+        "relativePriceVsMarket": 0.82
+      },
+      "reputation": {
+        "averageRating": 4.61,
+        "reviewsCount": 14,
+        "ratingTrend6m": -0.12,
+        "cancellationRatePct": 8,
+        "refundRatePct": 5.8,
+        "disputeRatePct": 1.9,
+        "responseRatePct": 82,
+        "responseTimeHours": 9
+      },
+      "monthlyRevenue": [
+        { "month": "2025-06", "grossRevenueArs": 0, "netRevenueArs": 0, "bookedNights": 0, "availableNights": 20, "averageDailyRateArs": 0 },
+        { "month": "2025-07", "grossRevenueArs": 120000, "netRevenueArs": 108000, "bookedNights": 3, "availableNights": 20, "averageDailyRateArs": 40000 },
+        { "month": "2025-08", "grossRevenueArs": 90000, "netRevenueArs": 81000, "bookedNights": 2, "availableNights": 20, "averageDailyRateArs": 45000 },
+        { "month": "2025-09", "grossRevenueArs": 0, "netRevenueArs": 0, "bookedNights": 0, "availableNights": 18, "averageDailyRateArs": 0 },
+        { "month": "2025-10", "grossRevenueArs": 160000, "netRevenueArs": 144000, "bookedNights": 4, "availableNights": 20, "averageDailyRateArs": 40000 },
+        { "month": "2025-11", "grossRevenueArs": 220000, "netRevenueArs": 198000, "bookedNights": 5, "availableNights": 21, "averageDailyRateArs": 44000 },
+        { "month": "2025-12", "grossRevenueArs": 800000, "netRevenueArs": 720000, "bookedNights": 12, "availableNights": 23, "averageDailyRateArs": 66700 },
+        { "month": "2026-01", "grossRevenueArs": 1400000, "netRevenueArs": 1260000, "bookedNights": 20, "availableNights": 24, "averageDailyRateArs": 70000 },
+        { "month": "2026-02", "grossRevenueArs": 1100000, "netRevenueArs": 990000, "bookedNights": 16, "availableNights": 22, "averageDailyRateArs": 68800 },
+        { "month": "2026-03", "grossRevenueArs": 400000, "netRevenueArs": 360000, "bookedNights": 7, "availableNights": 21, "averageDailyRateArs": 57100 },
+        { "month": "2026-04", "grossRevenueArs": 110000, "netRevenueArs": 99000, "bookedNights": 3, "availableNights": 20, "averageDailyRateArs": 36700 },
+        { "month": "2026-05", "grossRevenueArs": 0, "netRevenueArs": 0, "bookedNights": 0, "availableNights": 20, "averageDailyRateArs": 0 }
+      ],
+      "futureBookings": [
+        { "bookingId": "B011", "checkinDate": "2026-12-28", "checkoutDate": "2027-01-04", "payoutDate": "2026-12-29", "grossValueArs": 420000, "cancellationRiskPct": 22 }
+      ],
+      "clusterScores": {
+        "hostSolidity": 32,
+        "propertyQuality": 58,
+        "incomeHistory": 35,
+        "reputationOps": 41,
+        "futureBookings": 22,
+        "marketRisk": 60
+      },
+      "creditOffer": {
+        "requestedAmountArs": 700000,
+        "finalScore": 38.8,
+        "riskBand": "alto",
+        "decision": "rejected",
+        "expectedFutureRevenueP10Ars": 900000,
+        "maxAdvanceArs": 0,
+        "recommendedAdvanceArs": 0,
+        "feePct": 0,
+        "holdbackPct": 0,
+        "estimatedRepaymentMonths": 0,
+        "stressDown30": "no aplica",
+        "stressDown50": "no aplica",
+        "mainReasons": ["menos de 1 año de historial", "permiso pendiente", "cancelaciones altas", "pocas reservas futuras"]
+      }
+    },
+    {
+      "hostId": "H005",
+      "displayName": "Valentina - Loft Palermo",
+      "persona": "Host urbana excelente con ingresos constantes, más apta para línea chica que para smoothing estacional.",
+      "city": "Buenos Aires",
+      "profile": {
+        "hostTenureYears": 6.5,
+        "completedBookings": 342,
+        "identityVerified": true,
+        "taxInfoVerified": true,
+        "bankAccountVerified": true,
+        "priorPlatformLoans": 1,
+        "priorLoansRepaid": 1,
+        "fraudFlags": 0,
+        "accountSuspensionCount": 0,
+        "activeListingsCount": 1
+      },
+      "listing": {
+        "listingId": "L005",
+        "title": "Loft luminoso en Palermo Hollywood",
+        "propertyType": "departamento",
+        "capacityGuests": 3,
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "amenitiesScore": 89,
+        "listingQualityScore": 86,
+        "legalPermitStatus": "verified",
+        "calendarAvailableDays12m": 310,
+        "relativePriceVsMarket": 1.02
+      },
+      "reputation": {
+        "averageRating": 4.88,
+        "reviewsCount": 289,
+        "ratingTrend6m": 0.02,
+        "cancellationRatePct": 1,
+        "refundRatePct": 1.2,
+        "disputeRatePct": 0.2,
+        "responseRatePct": 98,
+        "responseTimeHours": 1.9
+      },
+      "monthlyRevenue": [
+        { "month": "2025-06", "grossRevenueArs": 1180000, "netRevenueArs": 1062000, "bookedNights": 18, "availableNights": 28, "averageDailyRateArs": 65600 },
+        { "month": "2025-07", "grossRevenueArs": 1250000, "netRevenueArs": 1125000, "bookedNights": 19, "availableNights": 29, "averageDailyRateArs": 65800 },
+        { "month": "2025-08", "grossRevenueArs": 1300000, "netRevenueArs": 1170000, "bookedNights": 20, "availableNights": 29, "averageDailyRateArs": 65000 },
+        { "month": "2025-09", "grossRevenueArs": 1220000, "netRevenueArs": 1098000, "bookedNights": 18, "availableNights": 28, "averageDailyRateArs": 67800 },
+        { "month": "2025-10", "grossRevenueArs": 1480000, "netRevenueArs": 1332000, "bookedNights": 22, "availableNights": 30, "averageDailyRateArs": 67300 },
+        { "month": "2025-11", "grossRevenueArs": 1520000, "netRevenueArs": 1368000, "bookedNights": 22, "availableNights": 30, "averageDailyRateArs": 69100 },
+        { "month": "2025-12", "grossRevenueArs": 1380000, "netRevenueArs": 1242000, "bookedNights": 20, "availableNights": 29, "averageDailyRateArs": 69000 },
+        { "month": "2026-01", "grossRevenueArs": 1350000, "netRevenueArs": 1215000, "bookedNights": 20, "availableNights": 29, "averageDailyRateArs": 67500 },
+        { "month": "2026-02", "grossRevenueArs": 1280000, "netRevenueArs": 1152000, "bookedNights": 19, "availableNights": 28, "averageDailyRateArs": 67400 },
+        { "month": "2026-03", "grossRevenueArs": 1550000, "netRevenueArs": 1395000, "bookedNights": 23, "availableNights": 30, "averageDailyRateArs": 67400 },
+        { "month": "2026-04", "grossRevenueArs": 1600000, "netRevenueArs": 1440000, "bookedNights": 24, "availableNights": 30, "averageDailyRateArs": 66700 },
+        { "month": "2026-05", "grossRevenueArs": 1400000, "netRevenueArs": 1260000, "bookedNights": 21, "availableNights": 29, "averageDailyRateArs": 66700 }
+      ],
+      "futureBookings": [
+        { "bookingId": "B012", "checkinDate": "2026-06-20", "checkoutDate": "2026-06-27", "payoutDate": "2026-06-21", "grossValueArs": 455000, "cancellationRiskPct": 8 },
+        { "bookingId": "B013", "checkinDate": "2026-07-08", "checkoutDate": "2026-07-16", "payoutDate": "2026-07-09", "grossValueArs": 520000, "cancellationRiskPct": 8 },
+        { "bookingId": "B014", "checkinDate": "2026-08-02", "checkoutDate": "2026-08-09", "payoutDate": "2026-08-03", "grossValueArs": 462000, "cancellationRiskPct": 9 }
+      ],
+      "clusterScores": {
+        "hostSolidity": 88,
+        "propertyQuality": 82,
+        "incomeHistory": 84,
+        "reputationOps": 90,
+        "futureBookings": 58,
+        "marketRisk": 82
+      },
+      "creditOffer": {
+        "requestedAmountArs": 900000,
+        "finalScore": 79.8,
+        "riskBand": "medio_bajo",
+        "decision": "approved",
+        "expectedFutureRevenueP10Ars": 3600000,
+        "maxAdvanceArs": 950000,
+        "recommendedAdvanceArs": 500000,
+        "feePct": 11,
+        "holdbackPct": 18,
+        "estimatedRepaymentMonths": 2,
+        "stressDown30": "repago probable",
+        "stressDown50": "repago probable",
+        "mainReasons": ["host excelente", "ingresos estables", "baja necesidad de smoothing", "riesgo regulatorio urbano más alto"]
+      }
+    },
+    {
+      "hostId": "H006",
+      "displayName": "Agustín - Cabaña Bosque Fueguino",
+      "persona": "Host de destino remoto con upside turístico pero mayor riesgo climático y operativo.",
+      "city": "Ushuaia",
+      "profile": {
+        "hostTenureYears": 3.3,
+        "completedBookings": 92,
+        "identityVerified": true,
+        "taxInfoVerified": true,
+        "bankAccountVerified": true,
+        "priorPlatformLoans": 0,
+        "priorLoansRepaid": 0,
+        "fraudFlags": 0,
+        "accountSuspensionCount": 0,
+        "activeListingsCount": 1
+      },
+      "listing": {
+        "listingId": "L006",
+        "title": "Cabaña en bosque fueguino",
+        "propertyType": "cabaña",
+        "capacityGuests": 4,
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "amenitiesScore": 78,
+        "listingQualityScore": 74,
+        "legalPermitStatus": "verified",
+        "calendarAvailableDays12m": 220,
+        "relativePriceVsMarket": 1.11
+      },
+      "reputation": {
+        "averageRating": 4.7,
+        "reviewsCount": 76,
+        "ratingTrend6m": -0.04,
+        "cancellationRatePct": 4.6,
+        "refundRatePct": 3.8,
+        "disputeRatePct": 1.1,
+        "responseRatePct": 91,
+        "responseTimeHours": 5.3
+      },
+      "monthlyRevenue": [
+        { "month": "2025-06", "grossRevenueArs": 620000, "netRevenueArs": 558000, "bookedNights": 9, "availableNights": 22, "averageDailyRateArs": 68900 },
+        { "month": "2025-07", "grossRevenueArs": 1850000, "netRevenueArs": 1665000, "bookedNights": 20, "availableNights": 25, "averageDailyRateArs": 92500 },
+        { "month": "2025-08", "grossRevenueArs": 1650000, "netRevenueArs": 1485000, "bookedNights": 18, "availableNights": 25, "averageDailyRateArs": 91700 },
+        { "month": "2025-09", "grossRevenueArs": 760000, "netRevenueArs": 684000, "bookedNights": 10, "availableNights": 22, "averageDailyRateArs": 76000 },
+        { "month": "2025-10", "grossRevenueArs": 520000, "netRevenueArs": 468000, "bookedNights": 7, "availableNights": 21, "averageDailyRateArs": 74300 },
+        { "month": "2025-11", "grossRevenueArs": 470000, "netRevenueArs": 423000, "bookedNights": 6, "availableNights": 20, "averageDailyRateArs": 78300 },
+        { "month": "2025-12", "grossRevenueArs": 980000, "netRevenueArs": 882000, "bookedNights": 12, "availableNights": 23, "averageDailyRateArs": 81700 },
+        { "month": "2026-01", "grossRevenueArs": 1450000, "netRevenueArs": 1305000, "bookedNights": 16, "availableNights": 24, "averageDailyRateArs": 90600 },
+        { "month": "2026-02", "grossRevenueArs": 1320000, "netRevenueArs": 1188000, "bookedNights": 15, "availableNights": 23, "averageDailyRateArs": 88000 },
+        { "month": "2026-03", "grossRevenueArs": 680000, "netRevenueArs": 612000, "bookedNights": 9, "availableNights": 21, "averageDailyRateArs": 75600 },
+        { "month": "2026-04", "grossRevenueArs": 390000, "netRevenueArs": 351000, "bookedNights": 5, "availableNights": 20, "averageDailyRateArs": 78000 },
+        { "month": "2026-05", "grossRevenueArs": 310000, "netRevenueArs": 279000, "bookedNights": 4, "availableNights": 20, "averageDailyRateArs": 77500 }
+      ],
+      "futureBookings": [
+        { "bookingId": "B015", "checkinDate": "2026-07-12", "checkoutDate": "2026-07-20", "payoutDate": "2026-07-13", "grossValueArs": 880000, "cancellationRiskPct": 14 },
+        { "bookingId": "B016", "checkinDate": "2026-08-04", "checkoutDate": "2026-08-12", "payoutDate": "2026-08-05", "grossValueArs": 840000, "cancellationRiskPct": 16 }
+      ],
+      "clusterScores": {
+        "hostSolidity": 66,
+        "propertyQuality": 76,
+        "incomeHistory": 59,
+        "reputationOps": 68,
+        "futureBookings": 57,
+        "marketRisk": 50
+      },
+      "creditOffer": {
+        "requestedAmountArs": 900000,
+        "finalScore": 62.6,
+        "riskBand": "medio_alto",
+        "decision": "pilot_line",
+        "expectedFutureRevenueP10Ars": 2400000,
+        "maxAdvanceArs": 650000,
+        "recommendedAdvanceArs": 420000,
+        "feePct": 18,
+        "holdbackPct": 35,
+        "estimatedRepaymentMonths": 4,
+        "stressDown30": "riesgo parcial",
+        "stressDown50": "alto riesgo",
+        "mainReasons": ["historial medio", "riesgo climático alto", "cancelaciones moderadas", "línea piloto conservadora"]
+      }
+    }
+  ]
+}

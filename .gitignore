@@ -1,0 +1,54 @@
+# Dependencias
+node_modules/
+.pnp
+.pnp.js
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Builds
+dist/
+build/
+out/
+.next/
+*.egg
+
+# Variables de entorno (NUNCA subir al repo)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# Editores / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+.Rhistory
+
+# Testing
+coverage/
+.pytest_cache/
+htmlcov/
+
+# Temporal
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Base de datos local
+*.sqlite
+*.db

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Renta Estable | Simulador de crédito</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Renta Estable</p>
+          <h1>Simulador de crédito estacional</h1>
+        </div>
+        <div class="topbar-controls">
+          <label class="field compact">
+            <span>Host</span>
+            <select id="hostSelect"></select>
+          </label>
+          <button id="resetButton" class="secondary-button" type="button">Restaurar</button>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <section class="summary-grid" aria-label="Resumen de oferta">
+          <article class="metric-panel decision-panel">
+            <span class="metric-label">Decisión</span>
+            <strong id="decisionValue">-</strong>
+            <small id="riskBandValue">-</small>
+          </article>
+          <article class="metric-panel">
+            <span class="metric-label">Score</span>
+            <strong id="scoreValue">-</strong>
+            <div class="meter"><span id="scoreMeter"></span></div>
+          </article>
+          <article class="metric-panel">
+            <span class="metric-label">Monto recomendado</span>
+            <strong id="recommendedValue">-</strong>
+            <small id="maxAdvanceValue">-</small>
+          </article>
+          <article class="metric-panel">
+            <span class="metric-label">Repago visible</span>
+            <strong id="repaymentValue">-</strong>
+            <small id="repaymentHint">-</small>
+          </article>
+        </section>
+
+        <section class="workspace">
+          <aside class="control-panel">
+            <div class="section-heading">
+              <h2>Parámetros</h2>
+              <span id="hostCity">-</span>
+            </div>
+
+            <label class="field">
+              <span>Monto solicitado</span>
+              <input id="requestedAmount" type="number" min="0" step="50000" />
+            </label>
+
+            <label class="field">
+              <span>Ingreso futuro P10</span>
+              <input id="futureRevenue" type="number" min="0" step="50000" />
+            </label>
+
+            <label class="range-field">
+              <span>
+                <b>Caída de temporada</b>
+                <output id="seasonDropOutput">0%</output>
+              </span>
+              <input id="seasonDrop" type="range" min="0" max="70" step="5" />
+            </label>
+
+            <label class="range-field">
+              <span>
+                <b>Retención de payouts</b>
+                <output id="holdbackOutput">0%</output>
+              </span>
+              <input id="holdback" type="range" min="0" max="50" step="1" />
+            </label>
+
+            <label class="range-field">
+              <span>
+                <b>Fee</b>
+                <output id="feeOutput">0%</output>
+              </span>
+              <input id="fee" type="range" min="0" max="30" step="1" />
+            </label>
+
+            <div class="section-heading cluster-title">
+              <h2>Clusters</h2>
+              <span>Peso x score</span>
+            </div>
+            <div id="clusterControls" class="cluster-controls"></div>
+          </aside>
+
+          <section class="analysis-panel">
+            <div class="panel-row">
+              <article class="chart-panel">
+                <div class="section-heading">
+                  <h2>Ingresos mensuales</h2>
+                  <span id="seasonalityLabel">-</span>
+                </div>
+                <div id="revenueChart" class="bar-chart" aria-label="Gráfico de ingresos mensuales"></div>
+              </article>
+
+              <article class="host-panel">
+                <div class="section-heading">
+                  <h2>Perfil</h2>
+                  <span id="listingType">-</span>
+                </div>
+                <dl id="hostFacts" class="facts"></dl>
+              </article>
+            </div>
+
+            <div class="panel-row bottom">
+              <article class="cluster-panel">
+                <div class="section-heading">
+                  <h2>Score por cluster</h2>
+                  <span id="weightedScoreLabel">-</span>
+                </div>
+                <div id="clusterBars" class="cluster-bars"></div>
+              </article>
+
+              <article class="booking-panel">
+                <div class="section-heading">
+                  <h2>Reservas futuras</h2>
+                  <span id="futureBookingTotal">-</span>
+                </div>
+                <div id="futureBookings" class="booking-list"></div>
+              </article>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
