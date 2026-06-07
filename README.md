@@ -1,98 +1,58 @@
 # FlowRent · Hackathon Fintech 2026
+# FlowRent
 
-## Propuesta
+> Adelantos embebidos para negocios estacionales dentro de plataformas digitales.
 
-FlowRent es infraestructura de adelantos embebidos para comercios con ingresos estacionales que operan dentro de plataformas digitales. Utiliza los datos operativos y el flujo de cobros de cada plataforma para estimar cuánto ingreso futuro puede adelantarse responsablemente y recuperarse mediante una retención transparente.
+## Ver el MVP
 
-El MVP usa Airbnb como caso ideal inicial: los anfitriones turísticos suelen tener ciclos marcados, reservas futuras visibles y cobros procesados dentro de la plataforma. El producto, sin embargo, está pensado para integrarse también en plataformas de comercio, turismo, servicios, educación y eventos.
+| | |
+| --- | --- |
+| 📊 **Consola de Riesgo** | [Ver demo →][LINK_DASHBOARD] |
+| 🏠 **Vista del Anfitrión** | [Ver demo →][LINK_HOST] |
 
-## Problema que resuelve
+---
 
-Los negocios estacionales no son necesariamente impredecibles: operan con ciclos que pueden entenderse. FlowRent permite que una plataforma convierta sus datos operativos en ofertas adaptadas al momento y la capacidad de cada negocio.
+## Problema
 
-## Equipo
+Los negocios estacionales necesitan capital antes del pico de ingresos, pero los bancos los rechazan porque no entienden sus ciclos. Las plataformas donde operan (Airbnb, Rappi, Mercado Libre) ya tienen todos los datos para evaluar ese riesgo, e infraestructura para retener cobros futuros.
 
-| Nombre | Rol |
-|--------|-----|
-| -      | -   |
+FlowRent convierte esa ventaja en adelantos responsables, recuperados directamente sobre los pagos que la plataforma ya procesa.
 
-## MVP construido
+## Cómo funciona
 
-- Vista host con oferta, fee, total, retención, motivos y consentimiento simulado.
-- Consola de riesgo con score, PD proxy, P10, stress y cobertura visible.
-- Cartera demo con unit economics y sensibilidad.
-- Simulador CLI y base SQLite reproducibles.
-- Documentación técnica, legal y guion de presentación.
+1. La plataforma comparte datos operativos del usuario: historial de ingresos, reservas futuras, reputación y control de cobros.
+2. FlowRent construye un score de crédito embebido con seis dimensiones y genera una oferta personalizada.
+3. El usuario acepta desde la app de la plataforma. La recuperación ocurre como una retención automática y transparente sobre cada cobro futuro.
 
-## Arquitectura
+El caso piloto es Airbnb: ciclos marcados, reservas visibles, cobros procesados por la plataforma.
 
-```
-proyecto/
-├── frontend/    # UI
-├── backend/     # API / lógica de negocio
-├── docs/        # Documentación, diagramas, pitch
-└── scripts/     # Scripts de setup o utilidades
-```
+## Stack
 
-## Requisitos
+HTML, CSS y JavaScript vanilla · SQLite · Python 3.11
 
-- Python >= 3.11
-- SQLite CLI para regenerar la base
+Sin frameworks ni servidor. Los datos son sintéticos (6 perfiles demo).
 
-## Demo local
-
-Regenerar la base SQLite:
-
-```bash
-./scripts/build_demo_db.sh
-```
-
-Usar el simulador por terminal:
-
-```bash
-./scripts/simulate_credit.py list
-./scripts/simulate_credit.py show H002
-./scripts/simulate_credit.py simulate H002 --season-drop 30 --requested 1500000
-```
-
-Levantar la UI:
+## Correr localmente
 
 ```bash
 python3 -m http.server 4173 --bind 127.0.0.1
 ```
 
-Abrir experiencia host:
+- Vista anfitrión: `http://127.0.0.1:4173/frontend/host.html`
+- Consola de riesgo: `http://127.0.0.1:4173/frontend/index.html`
 
-```text
-http://127.0.0.1:4173/frontend/host.html
-```
 
-Abrir consola de riesgo:
 
-```text
-http://127.0.0.1:4173/frontend/index.html
-```
+## Documentación
 
-## Demo recomendada
-
-1. Mostrar la oferta de Martín en la vista host.
-2. Simular consentimiento y aceptación.
-3. Abrir la consola de riesgo.
-4. Usar el botón `2 · Temporada −30%`.
-5. Usar el botón `3 · Rechazo explicable`.
-6. Cerrar con cartera y sensibilidad.
-
-## Documentación clave
-
-- [Guía para armar los slides manualmente](docs/guia_slides_manual.md)
+- [Modelo de negocio y MVP](docs/MVP_HACKATHON.md)
+- [Modelo de scoring](docs/modelo_hibrido.md)
+- [Marco legal](docs/legal_framework.md)
 - [Guion cronometrado de demo](docs/guion_demo_hackathon.md)
-- [MVP integral para hackathon](docs/MVP_HACKATHON.md)
-- [Especificación del modelo híbrido](docs/modelo_hibrido.md)
-- [Marco legal y reformulación como adelanto de cobros futuros](docs/legal_framework.md)
 
-## Limitaciones honestas
+---
 
-- Datos completamente ficticios.
-- PD proxy y P10 precargado, no modelos calibrados.
-- Sin transferencia de fondos, KYC ni retención real.
-- La estructura de fondeo, contratos y operación requiere validación legal por jurisdicción.
+*Datos ficticios. Sin transferencia de fondos, KYC ni retención real.*
+
+[LINK_DASHBOARD]: https://micagonzdark.github.io/hackaton-fintech-yhat/frontend/index.html
+[LINK_HOST]: https://bnb-hat.netlify.app/
