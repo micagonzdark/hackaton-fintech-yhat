@@ -1,4 +1,7 @@
 const DATA_URL = "../backend/seed/demo_credit_data.json";
+const ARS_PER_USD = 1000;
+const PRIMARY_DEMO_HOST_ID = "H002";
+const REJECTED_DEMO_HOST_ID = "H004";
 
 const scoreKeyByCluster = {
   host_solidity: "hostSolidity",
@@ -27,6 +30,7 @@ const monthNames = {
 let modelData;
 let selectedHost;
 let clusterScores = {};
+let activeDemoScenario = "base";
 
 const els = {
   hostSelect: document.querySelector("#hostSelect"),
@@ -37,53 +41,72 @@ const els = {
   holdback: document.querySelector("#holdback"),
   fee: document.querySelector("#fee"),
   fundingCost: document.querySelector("#fundingCost"),
-  defaultProbability: document.querySelector("#defaultProbability"),
+  pdStress: document.querySelector("#pdStress"),
   lossGivenDefault: document.querySelector("#lossGivenDefault"),
+  operatingMargin: document.querySelector("#operatingMargin"),
   operatingCost: document.querySelector("#operatingCost"),
   seasonDropOutput: document.querySelector("#seasonDropOutput"),
   holdbackOutput: document.querySelector("#holdbackOutput"),
   feeOutput: document.querySelector("#feeOutput"),
   fundingCostOutput: document.querySelector("#fundingCostOutput"),
-  defaultProbabilityOutput: document.querySelector("#defaultProbabilityOutput"),
+  pdStressOutput: document.querySelector("#pdStressOutput"),
   lossGivenDefaultOutput: document.querySelector("#lossGivenDefaultOutput"),
+  operatingMarginOutput: document.querySelector("#operatingMarginOutput"),
   operatingCostOutput: document.querySelector("#operatingCostOutput"),
   clusterControls: document.querySelector("#clusterControls"),
   decisionValue: document.querySelector("#decisionValue"),
   riskBandValue: document.querySelector("#riskBandValue"),
   scoreValue: document.querySelector("#scoreValue"),
   scoreMeter: document.querySelector("#scoreMeter"),
+  pdValue: document.querySelector("#pdValue"),
+  pricingHint: document.querySelector("#pricingHint"),
   recommendedValue: document.querySelector("#recommendedValue"),
   maxAdvanceValue: document.querySelector("#maxAdvanceValue"),
-  repaymentValue: document.querySelector("#repaymentValue"),
-  repaymentHint: document.querySelector("#repaymentHint"),
   hostCity: document.querySelector("#hostCity"),
   listingType: document.querySelector("#listingType"),
   seasonalityLabel: document.querySelector("#seasonalityLabel"),
-  weightedScoreLabel: document.querySelector("#weightedScoreLabel"),
   futureBookingTotal: document.querySelector("#futureBookingTotal"),
   revenueChart: document.querySelector("#revenueChart"),
   hostFacts: document.querySelector("#hostFacts"),
-  clusterBars: document.querySelector("#clusterBars"),
   futureBookings: document.querySelector("#futureBookings"),
-  portfolioCount: document.querySelector("#portfolioCount"),
-  portfolioMetrics: document.querySelector("#portfolioMetrics"),
-  portfolioMarginLabel: document.querySelector("#portfolioMarginLabel"),
-  unitEconomics: document.querySelector("#unitEconomics"),
-  sensitivityTable: document.querySelector("#sensitivityTable"),
+  offerMarginLabel: document.querySelector("#offerMarginLabel"),
+  offerProfitability: document.querySelector("#offerProfitability"),
   decisionPanel: document.querySelector(".decision-panel"),
+  demoNarrative: document.querySelector("#demoNarrative"),
+  demoActions: document.querySelectorAll("[data-demo-action]"),
 };
 
 function formatMoney(value) {
-  const amount = Number(value) || 0;
-  if (Math.abs(amount) >= 1_000_000) {
-    return `ARS ${(amount / 1_000_000).toFixed(2).replace(".", ",")}M`;
-  }
-
-  return new Intl.NumberFormat("es-AR", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "ARS",
+    currency: "USD",
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(Number(value) || 0);
+}
+
+function formatCompactMoney(value) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 1,
+    notation: "compact",
+  }).format(Number(value) || 0);
+}
+
+function convertMoneyFieldsToUsd(value) {
+  if (Array.isArray(value)) {
+    value.forEach(convertMoneyFieldsToUsd);
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+
+  Object.entries(value).forEach(([key, item]) => {
+    if (typeof item === "number" && key.endsWith("Ars")) {
+      value[key] = Math.round(item / ARS_PER_USD);
+    } else {
+      convertMoneyFieldsToUsd(item);
+    }
+  });
 }
 
 function formatNumber(value) {
@@ -100,6 +123,27 @@ function weightedScore(scores = clusterScores) {
   return modelData.scoreModel.clusters.reduce((total, cluster) => {
     return total + (scores[cluster.key] || 0) * (cluster.weightPct / 100);
   }, 0);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(value, max));
+}
+
+// Proxy experta para la demo. En producción se reemplaza por una PD calibrada
+// con resultados reales de recuperación/default.
+function proxyPdPct(score, stressPct = 0) {
+  const basePdPct = clamp(50 * Math.exp(-0.06 * (score - 40)), 1.5, 45);
+  return clamp(basePdPct * (1 + stressPct / 100), 0.5, 60);
+}
+
+function getHardRuleReasons(host) {
+  const reasons = [];
+  if (host.profile.fraudFlags > 0) reasons.push("alerta de fraude");
+  if (host.profile.accountSuspensionCount > 0) reasons.push("cuenta suspendida");
+  if (!host.profile.identityVerified) reasons.push("identidad no verificada");
+  if (!host.profile.bankAccountVerified) reasons.push("cuenta bancaria no verificada");
+  if (host.listing.legalPermitStatus !== "verified") reasons.push("habilitación pendiente");
+  return reasons;
 }
 
 function riskBand(score) {
@@ -140,40 +184,77 @@ function getParams() {
 function getEconomicsParams() {
   return {
     fundingCost: Number(els.fundingCost.value) || 0,
-    defaultProbability: Number(els.defaultProbability.value) || 0,
+    pdStress: Number(els.pdStress.value) || 0,
     lossGivenDefault: Number(els.lossGivenDefault.value) || 0,
+    operatingMargin: Number(els.operatingMargin.value) || 0,
     operatingCost: Number(els.operatingCost.value) || 0,
   };
 }
 
+function calculatePricing(pdPct, months, assumptions) {
+  const pd = clamp(pdPct / 100, 0, 0.99);
+  const lgd = assumptions.lossGivenDefault / 100;
+  const riskPremiumAnnualPct = ((pd * lgd) / (1 - pd || 1)) * 100;
+  const annualRatePct =
+    assumptions.fundingCost + assumptions.operatingMargin + riskPremiumAnnualPct;
+  const suggestedFeePct =
+    annualRatePct * (Math.max(months, 1) / 12) + assumptions.operatingCost;
+
+  return { annualRatePct, riskPremiumAnnualPct, suggestedFeePct };
+}
+
+function termPdPct(pdPct, months) {
+  const annualPd = clamp(pdPct / 100, 0, 0.99);
+  const termYears = Math.max(months, 1) / 12;
+  return (1 - (1 - annualPd) ** termYears) * 100;
+}
+
+function classifyDecision({ hardRuleReasons, pdPct, recommended, requested, score }) {
+  if (hardRuleReasons.length > 0 || score < 50 || pdPct >= 35) return "rejected";
+  if (score < 65 || pdPct >= 15) return recommended > 0 ? "pilot" : "rejected";
+  if (recommended >= requested * 0.95 && requested > 0) return "approved";
+  if (recommended >= requested * 0.45 && requested > 0) return "partial";
+  return recommended > 0 ? "pilot" : "rejected";
+}
+
 function simulateOffer() {
   const params = getParams();
+  const economics = getEconomicsParams();
   const score = weightedScore();
+  const pdPct = proxyPdPct(score, economics.pdStress);
+  const hardRuleReasons = getHardRuleReasons(selectedHost);
   const adjustedRevenue = params.futureRevenueP10 * (1 - params.seasonDrop / 100);
-  const maxAdvance =
+  const recoverabilityCap =
     (adjustedRevenue * (params.holdback / 100)) / (1 + params.fee / 100 || 1);
+  const maxAdvance = recoverabilityCap * (1 - pdPct / 100);
   let recommended = Math.max(0, Math.min(params.requested, maxAdvance));
-  let decision = "rejected";
-
-  if (score < 50) {
+  const decision = classifyDecision({
+    hardRuleReasons,
+    pdPct,
+    recommended,
+    requested: params.requested,
+    score,
+  });
+  if (decision === "rejected") {
     recommended = 0;
-  } else if (recommended >= params.requested * 0.95 && params.requested > 0) {
-    decision = "approved";
-  } else if (recommended >= params.requested * 0.45 && params.requested > 0) {
-    decision = "partial";
-  } else if (recommended > 0) {
-    decision = "pilot";
   }
 
-  const repayment = estimateVisibleRepayment(recommended, params);
+  const pricing = calculatePricing(
+    pdPct,
+    selectedHost.creditOffer.estimatedRepaymentMonths,
+    economics,
+  );
 
   return {
     adjustedRevenue,
     decision,
+    hardRuleReasons,
     maxAdvance,
     params,
+    pdPct,
+    pricing,
     recommended,
-    repayment,
+    recoverabilityCap,
     score,
   };
 }
@@ -218,7 +299,13 @@ function estimateHostVisibleRepayment(host, recommended, params) {
 }
 
 function renderHostSelect() {
-  els.hostSelect.innerHTML = modelData.hosts
+  const orderedHosts = [...modelData.hosts].sort((a, b) => {
+    if (a.hostId === PRIMARY_DEMO_HOST_ID) return -1;
+    if (b.hostId === PRIMARY_DEMO_HOST_ID) return 1;
+    return a.hostId.localeCompare(b.hostId);
+  });
+
+  els.hostSelect.innerHTML = orderedHosts
     .map((host) => {
       return `<option value="${host.hostId}">${host.hostId} - ${host.city} - ${host.displayName}</option>`;
     })
@@ -316,9 +403,39 @@ function render() {
   const result = simulateOffer();
   renderOutputs(result);
   renderRevenueChart();
-  renderClusterBars();
   renderFutureBookings(result);
-  renderPortfolio(result);
+  renderOfferProfitability(result);
+}
+
+function updateDemoScenario(scenario) {
+  activeDemoScenario = scenario;
+  els.demoActions.forEach((button) => {
+    button.classList.toggle("active", button.dataset.demoAction === activeDemoScenario);
+  });
+}
+
+function applyDemoScenario(scenario) {
+  updateDemoScenario(scenario);
+
+  if (scenario === "base") {
+    setHost(PRIMARY_DEMO_HOST_ID);
+    els.demoNarrative.textContent =
+      "Martín recibe aprobación total porque el adelanto pedido entra dentro del tope responsable.";
+    return;
+  }
+
+  if (scenario === "stress") {
+    setHost(PRIMARY_DEMO_HOST_ID);
+    els.seasonDrop.value = 30;
+    els.demoNarrative.textContent =
+      "Ante una temporada 30% menor, el monto baja automáticamente y la decisión pasa a aprobación parcial.";
+    render();
+    return;
+  }
+
+  setHost(REJECTED_DEMO_HOST_ID);
+  els.demoNarrative.textContent =
+    "Una habilitación pendiente activa una regla excluyente: monto cero y motivo visible.";
 }
 
 function renderOutputs(result) {
@@ -327,29 +444,27 @@ function renderOutputs(result) {
   els.feeOutput.textContent = `${result.params.fee}%`;
   const economics = getEconomicsParams();
   els.fundingCostOutput.textContent = `${economics.fundingCost}%`;
-  els.defaultProbabilityOutput.textContent = `${economics.defaultProbability}%`;
+  els.pdStressOutput.textContent = `${economics.pdStress > 0 ? "+" : ""}${economics.pdStress}%`;
   els.lossGivenDefaultOutput.textContent = `${economics.lossGivenDefault}%`;
+  els.operatingMarginOutput.textContent = `${economics.operatingMargin}%`;
   els.operatingCostOutput.textContent = `${economics.operatingCost}%`;
 
   els.decisionValue.textContent = decisionLabel(result.decision);
-  els.riskBandValue.textContent = `Riesgo ${riskBand(result.score)}`;
+  els.riskBandValue.textContent =
+    result.hardRuleReasons.length > 0
+      ? `Regla: ${result.hardRuleReasons.join(", ")}`
+      : `Riesgo ${riskBand(result.score)}`;
   els.scoreValue.textContent = result.score.toFixed(1);
   els.scoreMeter.style.width = `${Math.max(0, Math.min(result.score, 100))}%`;
+  els.pdValue.textContent = `${result.pdPct.toFixed(1)}%`;
+  els.pricingHint.textContent =
+    result.decision === "rejected"
+      ? "Pricing no aplica por regla o riesgo excluyente"
+      : `Fee sugerido ${result.pricing.suggestedFeePct.toFixed(1)}% · contractual ${result.params.fee}%`;
   els.recommendedValue.textContent = formatMoney(result.recommended);
-  els.maxAdvanceValue.textContent = `Tope simulado: ${formatMoney(result.maxAdvance)}`;
+  els.maxAdvanceValue.textContent =
+    `Tope P10 ${formatMoney(result.recoverabilityCap)} · ajustado por PD ${formatMoney(result.maxAdvance)}`;
 
-  const repayment = result.repayment;
-  if (result.recommended <= 0) {
-    els.repaymentValue.textContent = "No aplica";
-    els.repaymentHint.textContent = "Sin adelanto";
-  } else {
-    els.repaymentValue.textContent = `${Math.round(repayment.coverage * 100)}%`;
-    els.repaymentHint.textContent = repayment.fullyRepaid
-      ? `Cubre ${formatMoney(repayment.target)} en ${repayment.months} meses visibles`
-      : `${formatMoney(repayment.collected)} visible sobre ${formatMoney(repayment.target)}`;
-  }
-
-  els.weightedScoreLabel.textContent = `Score ${result.score.toFixed(1)}`;
   els.decisionPanel.className = `metric-panel decision-panel ${decisionClass(result.decision)}`;
 }
 
@@ -379,28 +494,7 @@ function renderRevenueChart() {
             <span class="bar-fill ${tone}" style="height: ${height}%"></span>
           </div>
           <span class="bar-label">${month}</span>
-          <span class="bar-value">${formatMoney(row.grossRevenueArs)}</span>
-        </div>
-      `;
-    })
-    .join("");
-}
-
-function renderClusterBars() {
-  els.clusterBars.innerHTML = modelData.scoreModel.clusters
-    .map((cluster) => {
-      const score = clusterScores[cluster.key] || 0;
-      const contribution = score * (cluster.weightPct / 100);
-      return `
-        <div class="cluster-bar">
-          <div class="cluster-bar-row">
-            <span class="cluster-name">${cluster.name}</span>
-            <span class="cluster-track">
-              <span class="cluster-fill" style="width: ${score}%"></span>
-            </span>
-            <span class="cluster-score">${score}/100</span>
-          </div>
-          <div class="cluster-note">Peso ${cluster.weightPct}% · aporta ${contribution.toFixed(1)} puntos</div>
+          <span class="bar-value">${formatCompactMoney(row.grossRevenueArs)}</span>
         </div>
       `;
     })
@@ -438,194 +532,51 @@ function renderFutureBookings(result) {
     .join("");
 }
 
-function buildPortfolio(result) {
-  return modelData.hosts
-    .map((host) => {
-      const offer = host.creditOffer;
-      const isSelected = host.hostId === selectedHost.hostId;
-      const params = isSelected
-        ? result.params
-        : {
-            fee: offer.feePct,
-            holdback: offer.holdbackPct,
-            seasonDrop: 0,
-          };
-      const principal = isSelected ? result.recommended : offer.recommendedAdvanceArs;
-      const score = isSelected ? result.score : offer.finalScore;
-      const p10 = isSelected ? result.params.futureRevenueP10 : offer.expectedFutureRevenueP10Ars;
-      const decision = isSelected ? result.decision : offer.decision;
-      const repayment = estimateHostVisibleRepayment(host, principal, params);
-
-      return {
-        hostId: host.hostId,
-        city: host.city,
-        decision,
-        score,
-        principal,
-        p10,
-        feePct: params.fee,
-        holdbackPct: params.holdback,
-        months: Math.max(1, offer.estimatedRepaymentMonths || repayment.months || 1),
-        feeIncome: principal * (params.fee / 100),
-        visibleCoverage: repayment.coverage,
-      };
-    })
-    .filter((item) => item.principal > 0);
-}
-
-function calculateEconomics(portfolio, assumptions) {
-  const totals = portfolio.reduce(
-    (acc, item) => {
-      const fundingCost =
-        item.principal * (assumptions.fundingCost / 100) * (item.months / 12);
-      const expectedLoss =
-        item.principal *
-        (assumptions.defaultProbability / 100) *
-        (assumptions.lossGivenDefault / 100);
-      const operatingCost = item.principal * (assumptions.operatingCost / 100);
-      const contribution = item.feeIncome - fundingCost - expectedLoss - operatingCost;
-
-      acc.principal += item.principal;
-      acc.p10 += item.p10;
-      acc.feeIncome += item.feeIncome;
-      acc.fundingCost += fundingCost;
-      acc.expectedLoss += expectedLoss;
-      acc.operatingCost += operatingCost;
-      acc.contribution += contribution;
-      acc.weightedHoldback += item.holdbackPct * item.principal;
-      acc.weightedMonths += item.months * item.principal;
-      acc.score += item.score;
-      acc.visibleCoverage += item.visibleCoverage;
-      return acc;
-    },
-    {
-      principal: 0,
-      p10: 0,
-      feeIncome: 0,
-      fundingCost: 0,
-      expectedLoss: 0,
-      operatingCost: 0,
-      contribution: 0,
-      weightedHoldback: 0,
-      weightedMonths: 0,
-      score: 0,
-      visibleCoverage: 0,
-    },
-  );
-
-  const count = portfolio.length || 1;
-  const principal = totals.principal || 1;
-
-  return {
-    ...totals,
-    count: portfolio.length,
-    rejectedCount: modelData.hosts.length - portfolio.length,
-    weightedFeePct: (totals.feeIncome / principal) * 100,
-    advanceToP10Pct: totals.p10 > 0 ? (totals.principal / totals.p10) * 100 : 0,
-    avgScore: totals.score / count,
-    avgVisibleCoveragePct: (totals.visibleCoverage / count) * 100,
-    avgHoldbackPct: totals.weightedHoldback / principal,
-    avgMonths: totals.weightedMonths / principal,
-    marginPct: (totals.contribution / principal) * 100,
-  };
-}
-
-function renderPortfolio(result) {
-  const portfolio = buildPortfolio(result);
+function renderOfferProfitability(result) {
   const assumptions = getEconomicsParams();
-  const economics = calculateEconomics(portfolio, assumptions);
+  const principal = result.recommended;
+  const months = Math.max(1, selectedHost.creditOffer.estimatedRepaymentMonths || 1);
+  const feeIncome = principal * (result.params.fee / 100);
+  const fundingCost = principal * (assumptions.fundingCost / 100) * (months / 12);
+  const termPd = termPdPct(result.pdPct, months);
+  const expectedLoss =
+    principal * (termPd / 100) * (assumptions.lossGivenDefault / 100);
+  const operatingCost = principal * (assumptions.operatingCost / 100);
+  const totalCosts = fundingCost + expectedLoss + operatingCost;
+  const profit = feeIncome - totalCosts;
+  const marginPct = principal > 0 ? (profit / principal) * 100 : 0;
+  const tone = profit >= 0 ? "positive" : "negative";
 
-  els.portfolioCount.textContent = `${portfolio.length}/${modelData.hosts.length} con oferta`;
-  els.portfolioMarginLabel.textContent = `Margen ${economics.marginPct.toFixed(1)}%`;
-
-  els.portfolioMetrics.innerHTML = [
-    ["Capital recomendado", formatMoney(economics.principal)],
-    ["Fee esperado", formatMoney(economics.feeIncome)],
-    ["Fee ponderado", `${economics.weightedFeePct.toFixed(1)}%`],
-    ["Advance / P10", `${economics.advanceToP10Pct.toFixed(1)}%`],
-    ["Retención prom.", `${economics.avgHoldbackPct.toFixed(1)}%`],
-    ["Plazo prom.", `${economics.avgMonths.toFixed(1)} meses`],
-    ["Cobertura visible", `${economics.avgVisibleCoveragePct.toFixed(0)}%`],
-    ["Score promedio", economics.avgScore.toFixed(1)],
+  els.offerMarginLabel.textContent =
+    principal > 0 ? `Margen estimado ${marginPct.toFixed(1)}%` : "Sin oferta";
+  els.offerProfitability.innerHTML = [
+    ["Adelanto", formatMoney(principal), ""],
+    ["Ingreso por fee", formatMoney(feeIncome), "positive"],
+    ["Costos + riesgo", formatMoney(totalCosts), "negative"],
+    ["Resultado estimado", formatMoney(profit), `${tone} outcome`],
   ]
-    .map(([label, value]) => {
-      return `<div class="portfolio-metric"><span>${label}</span><strong>${value}</strong></div>`;
-    })
-    .join("");
-
-  els.unitEconomics.innerHTML = [
-    ["Ingreso por fee", economics.feeIncome, "positive"],
-    ["Costo de fondeo", -economics.fundingCost, "negative"],
-    ["Pérdida esperada", -economics.expectedLoss, "negative"],
-    ["Costo operativo", -economics.operatingCost, "negative"],
-    [
-      "Contribución neta",
-      economics.contribution,
-      economics.contribution >= 0 ? "positive" : "negative",
-    ],
-  ]
-    .map(([label, value, tone]) => {
+    .map(([label, value, itemTone]) => {
       return `
-        <div class="unit-row ${tone}">
+        <div class="profit-metric ${itemTone}">
           <span>${label}</span>
-          <strong>${formatMoney(value)}</strong>
+          <strong>${value}</strong>
         </div>
       `;
     })
     .join("");
-
-  renderSensitivityTable(portfolio, assumptions);
-}
-
-function renderSensitivityTable(portfolio, baseAssumptions) {
-  const scenarios = [
-    {
-      name: "Optimista",
-      fundingCost: 20,
-      defaultProbability: 3,
-      lossGivenDefault: 25,
-      operatingCost: baseAssumptions.operatingCost,
-    },
-    {
-      name: "Base",
-      ...baseAssumptions,
-    },
-    {
-      name: "Stress",
-      fundingCost: 45,
-      defaultProbability: 10,
-      lossGivenDefault: 50,
-      operatingCost: Math.max(baseAssumptions.operatingCost, 2),
-    },
-  ];
-
-  els.sensitivityTable.innerHTML = `
-    <div class="sensitivity-row header">
-      <span>Escenario</span>
-      <span>Supuestos</span>
-      <span>Contribución</span>
-      <span>Margen</span>
-    </div>
-    ${scenarios
-      .map((scenario) => {
-        const econ = calculateEconomics(portfolio, scenario);
-        const tone = econ.contribution >= 0 ? "positive" : "negative";
-        return `
-          <div class="sensitivity-row ${tone}">
-            <span>${scenario.name}</span>
-            <span>Fondeo ${scenario.fundingCost}% · PD ${scenario.defaultProbability}% · LGD ${scenario.lossGivenDefault}%</span>
-            <strong>${formatMoney(econ.contribution)}</strong>
-            <strong>${econ.marginPct.toFixed(1)}%</strong>
-          </div>
-        `;
-      })
-      .join("")}
-  `;
 }
 
 function bindEvents() {
-  els.hostSelect.addEventListener("change", (event) => setHost(event.target.value));
+  els.hostSelect.addEventListener("change", (event) => {
+    updateDemoScenario("custom");
+    els.demoNarrative.textContent =
+      "Exploración manual: ajustá supuestos y observá cómo cambia la decisión.";
+    setHost(event.target.value);
+  });
   els.resetButton.addEventListener("click", () => setHost(selectedHost.hostId));
+  els.demoActions.forEach((button) => {
+    button.addEventListener("click", () => applyDemoScenario(button.dataset.demoAction));
+  });
 
   [
     els.requestedAmount,
@@ -634,8 +585,9 @@ function bindEvents() {
     els.holdback,
     els.fee,
     els.fundingCost,
-    els.defaultProbability,
+    els.pdStress,
     els.lossGivenDefault,
+    els.operatingMargin,
     els.operatingCost,
   ].forEach((input) => input.addEventListener("input", render));
 }
@@ -647,9 +599,11 @@ async function init() {
   }
 
   modelData = await response.json();
+  convertMoneyFieldsToUsd(modelData);
+  modelData.metadata.currency = "USD";
   renderHostSelect();
   bindEvents();
-  setHost(modelData.hosts[0].hostId);
+  setHost(PRIMARY_DEMO_HOST_ID);
 }
 
 init().catch((error) => {

@@ -1,137 +1,129 @@
-# Marco legal: adelanto de cobros futuros para anfitriones
+# Marco legal y de fondeo para FlowRent
 
-> Nota: esto no es asesoramiento legal. Es un encuadre de producto para pitch y MVP. Antes de salir a producción hay que validarlo con abogados por jurisdicción, entidad operadora, fuente de fondos y contrato.
+> Nota: esto no es asesoramiento legal. Es un encuadre de producto para pitch y MVP. Antes de operar debe validarse por jurisdicción, tipo de comercio, fuente de fondos, entidad operadora, contrato y flujo de pagos.
 
-## Resumen ejecutivo
+## Producto general
 
-La formulación original, "Airbnb le presta plata al host", es riesgosa. Airbnb no es un banco y, si ofrece financiamiento habitual al público, puede quedar alcanzada por regulaciones financieras aunque no capte depósitos.
+FlowRent es infraestructura de adelantos embebidos para comercios estacionales que operan dentro de plataformas digitales.
 
-La reformulación recomendada para el pitch es:
+La plataforma aporta datos autorizados, distribución y coordinación con los cobros. FlowRent calcula y administra la oferta. El capital puede provenir de inversores de cartera y la operación debe adoptar la estructura jurídica correspondiente.
 
-> Renta Estable no es un préstamo abierto. Es un adelanto opt-in sobre cobros futuros que la plataforma ya procesa, recuperado mediante retención transparente de próximos payouts.
+No conviene presentar el producto como:
 
-La diferencia no es sólo semántica. El producto deja de prometer crédito general y se apoya en tres ideas defendibles:
+> La plataforma presta dinero a sus usuarios.
 
-- El adelanto se calcula sobre flujo observable de la plataforma.
-- La recuperación ocurre dentro del flujo de pagos de reservas, no mediante cobranza externa.
-- El host no paga cuotas: acepta que una parte de sus futuros cobros se compense hasta cubrir adelanto + fee.
+La formulación recomendada es:
 
-## Riesgo de la versión "línea de crédito"
+> FlowRent convierte datos y flujos de cobro de una plataforma en adelantos transparentes, adaptados al ciclo de comercios estacionales.
 
-### 1. Actividad bancaria o intermediación financiera
+## Dos niveles de riesgo
 
-En Argentina, la Ley 21.526 comprende a quienes realizan intermediación habitual entre oferta y demanda de recursos financieros. Si Airbnb financiara préstamos con fondos captados de usuarios, inversores o terceros y los colocara en hosts, el riesgo regulatorio sería alto.
+### Nivel 1: adelanto de cobros confirmados
 
-Regla de diseño: no captar fondos del público, no usar lenguaje de banco, no vender "cuentas", "depósitos", "plazo fijo" ni "préstamos" emitidos por Airbnb Marketplace.
+Se adelanta una parte de ventas, reservas o cuentas por cobrar ya visibles y suficientemente confirmadas dentro de la plataforma.
 
-### 2. Proveedor no financiero de crédito
+Es el punto de partida más conservador porque el flujo subyacente es observable. Aun así, requiere definir:
 
-Aunque una empresa no sea banco, si ofrece créditos o financiaciones de forma habitual puede quedar dentro del régimen de Proveedores No Financieros de Crédito del BCRA. El BCRA describe el registro para personas jurídicas que, sin ser entidades financieras, hacen oferta habitual de crédito al público como actividad principal o accesoria.
+- titularidad y cesión o compensación de los cobros;
+- tratamiento de cancelaciones, refunds y chargebacks;
+- consentimiento y reglas de retención;
+- transparencia de fee, total y duración;
+- obligaciones fiscales, de datos y de pagos.
 
-Implicancia: si el producto queda como crédito directo de Airbnb al host, hay que contemplar registro, régimen informativo, responsable de atención a usuarios, transparencia de costo financiero y controles de cumplimiento.
+### Nivel 2: adelanto sobre ingresos esperados
 
-### 3. Servicios de pago
+Se adelanta más que el flujo confirmado utilizando historial, estacionalidad y estimaciones conservadoras.
 
-Airbnb ya opera pagos y payouts mediante entidades de pago. Si Renta Estable toca saldos de usuarios, cuentas de pago o liquidaciones, debería correr por la entidad de pagos correspondiente y no por la entidad marketplace.
+Este producto es comercialmente más potente, pero se parece más a financiamiento de riesgo. Puede activar requisitos adicionales como registro, información al usuario, límites, reportes o intervención de una entidad habilitada.
 
-Regla de diseño: separar marketplace, pagos y financiamiento. Si hay cuentas de pago, los fondos de clientes deben estar segregados y disponibles según la normativa aplicable.
+## Tres funciones que deben separarse
 
-### 4. Transparencia, usuarios y MiPyMEs
+### 1. Capital de la empresa
 
-Muchos anfitriones pueden ser personas humanas, monotributistas o MiPyMEs. Si la operación se considera crédito, deben mostrarse en forma clara monto financiado, tasa/costo, fee, total a devolver/descontar, periodicidad y cargos adicionales. En pitch conviene evitar una promesa de "tasa baja" si no está modelada.
+VCs, aceleradoras o inversores ángeles pueden aportar equity a FlowRent para financiar tecnología, equipo, integraciones y crecimiento.
 
-### 5. Datos personales y scoring
+### 2. Capital de la cartera
 
-El score usa datos de identidad, ingresos, reputación, comportamiento y reservas. Eso exige base legal/consentimiento, finalidad informada, minimización de datos, seguridad, explicabilidad y mecanismo de corrección. Para el pitch: el host opta por el producto y autoriza el uso de sus datos de plataforma para evaluar el adelanto.
+Un fondo de deuda privada, vehículo/SPV, family office u otros inversores profesionales pueden aportar capital destinado a los adelantos y recibir el rendimiento acordado de la cartera.
 
-### 6. Permisos locales y fiscalidad
+Un VC tradicional no suele fondear cada adelanto a cambio de intereses. Si participa de esa forma, actúa como inversor de deuda o cartera, idealmente mediante una estructura separada.
 
-El producto no debería financiar propiedades sin habilitación local cuando sea exigible. La retención de payouts también tiene efectos fiscales y contables: fee, IVA/impuestos locales, comprobantes y tratamiento de retenciones.
+### 3. Operación y encuadre regulatorio
 
-## Reformulación recomendada
+El aportante de capital no necesariamente es la entidad que puede originar, instrumentar o administrar legalmente la operación. Reemplazar un banco por inversores privados puede mejorar el costo o la flexibilidad, pero no elimina obligaciones regulatorias, contractuales, impositivas o de protección al usuario.
 
-### Producto: adelanto sobre reservas y payouts
+## Caso inicial: Airbnb
 
-Nombre sugerido:
+Airbnb es el caso ideal inicial porque combina:
 
-```text
-Renta Estable: adelanto de cobros futuros
-```
+- hosts con ingresos turísticos estacionales;
+- historial, reputación y reservas futuras visibles;
+- payouts procesados dentro de la plataforma;
+- posibilidad de recuperar mediante una retención autorizada.
 
-Mecánica:
+FlowRent no debe afirmar ni insinuar una alianza existente con Airbnb.
 
-1. El host solicita un adelanto dentro de la app.
-2. La plataforma calcula un tope con reservas confirmadas, historial de ingresos y escenario P10.
-3. El host ve adelanto, fee fijo, total a descontar, porcentaje de retención y calendario estimado.
-4. Si acepta, Airbnb Payments o un partner regulado adelanta el monto.
-5. Cada próximo payout se divide: una parte va al host y otra compensa el adelanto.
-6. Al llegar al total pactado, la retención termina automáticamente.
+Tampoco debe afirmar que Airbnb opera universalmente en USD. La moneda de payout depende del país y método disponible. La ventaja financiera aparece cuando la moneda del fondeo, la oferta y la recuperación puede alinearse, especialmente en moneda dura.
 
-Frase de pitch:
+## Riesgos relevantes
 
-> No pedimos que Airbnb sea banco. Usamos la ventaja que sí tiene: ve reservas, cobra al huésped y liquida al host. Por eso puede adelantar parte de ingresos futuros y recuperarlos dentro del mismo flujo de pagos.
+### Actividad financiera
 
-### Dos niveles de producto
+En Argentina, una actividad habitual de crédito o intermediación puede quedar alcanzada por normativa financiera, incluso cuando el operador no sea un banco. El análisis depende de quién aporta fondos, quién origina, a quién se ofrece, cómo se instrumenta y cómo se cobra.
 
-#### Nivel 1: adelanto de reservas confirmadas
+### Servicios de pago
 
-Este es el MVP más defendible. Se adelanta un porcentaje de cobros de reservas ya confirmadas y cobradas o autorizadas. Se parece más a una liquidación anticipada o descuento de cuentas por cobrar que a un préstamo de libre destino.
+Si FlowRent interviene en cuentas de pago, saldos o liquidaciones, debe coordinarse con la entidad de pagos correspondiente y respetar la normativa aplicable.
 
-Guardrails:
+### Transparencia y protección del usuario
 
-- Sólo reservas confirmadas y con pago exitoso o altamente asegurado.
-- Retención limitada al payout de esas reservas o reservas futuras dentro de la app.
-- Sin débito automático externo como camino principal de cobro.
-- Sin mora punitoria si el flujo baja por cancelaciones no fraudulentas.
-- Reglas claras ante cancelaciones, refunds, chargebacks y suspensión.
+La oferta debe informar claramente:
 
-#### Nivel 2: adelanto estacional sobre ingresos esperados
+- monto recibido;
+- fee, tasa o costo aplicable;
+- total a recuperar;
+- porcentaje de retención;
+- duración estimada;
+- reglas ante menor actividad, cancelaciones y disputas.
 
-Este nivel usa P10 e historial para adelantar más que las reservas ya confirmadas. Es comercialmente más potente, pero regulatoriamente se parece más a financiamiento.
+### Datos y scoring
 
-Guardrail para producción:
+El uso de identidad, ingresos, comportamiento, reputación y reservas requiere finalidad informada, base legal o consentimiento, minimización, seguridad, explicabilidad y mecanismos de corrección.
 
-- Operarlo con banco, fintech o PNFC registrado, o validar registro propio.
-- Mantener a Airbnb como originador de datos, canal y agente de retención de payouts.
-- El partner regulado figura como acreedor si la jurisdicción lo requiere.
+### Moneda
 
-## Alternativas de estructura
+Si fondeo y recuperación están en monedas distintas, aparece riesgo cambiario. El modelo debe:
 
-| Opción | Cómo funciona | Riesgo legal | Cuándo usar |
-|---|---|---:|---|
-| Préstamo directo de Airbnb | Airbnb desembolsa dinero y cobra cuotas | Alto | No recomendado para MVP |
-| Partner regulado | Banco/fintech presta, Airbnb aporta datos y retiene payouts | Medio | Producción y montos altos |
-| Adelanto de reservas confirmadas | Anticipo de cobros ya visibles en la plataforma | Medio-bajo | MVP recomendado |
-| Crédito cerrado en app | El monto sólo paga servicios de limpieza, mantenimiento o seguros dentro de la app | Medio | Si se quiere evitar cash-out |
-| Marketplace P2P | Terceros financian hosts vía plataforma | Alto | Evitar salvo licencia específica |
+- alinear monedas cuando sea posible;
+- definir quién absorbe variaciones;
+- evitar prometer retornos fijos sin modelar el riesgo;
+- mostrar moneda y condiciones de forma transparente.
 
-## Reglas de diseño para reducir riesgo
+## Reglas recomendadas para el MVP
 
-- Cambiar "crédito" por "adelanto", "descuento de cobros" o "liquidación anticipada".
-- Cambiar "repago" por "retención", "compensación" o "recuperación por payout".
-- Mostrar siempre total a descontar, fee, porcentaje de retención y fecha estimada de fin.
-- Requerir aceptación expresa del host para usar datos, adelantar fondos y retener payouts.
-- Evitar cobranza fuera de la plataforma salvo fraude, error, chargeback o incumplimiento contractual grave.
-- Poner límite de concentración: nunca retener 100% del payout; dejar flujo operativo mínimo al host.
-- Excluir hosts sin identidad, datos fiscales, cuenta bancaria y permiso local cuando aplique.
-- Incluir revisión manual y derecho a corregir datos que afecten el score.
-- Separar contractualmente: marketplace, entidad de pagos y entidad financiadora.
+- Comenzar con cobros o reservas confirmadas.
+- Usar lenguaje de adelanto y retención, sin esconder la sustancia económica.
+- Mostrar fee y total a recuperar.
+- Exigir aceptación expresa para datos y retención.
+- Limitar la retención para preservar flujo operativo.
+- Definir reglas para cancelaciones, refunds y chargebacks.
+- Separar contractualmente plataforma, pagos, FlowRent y aportante de capital.
+- Validar la estructura antes de usar fondos reales.
 
-## Impacto en el pitch
-
-La slide legal debería decir:
+## Lenguaje para el pitch
 
 ```text
-Legal-first product design
+El capital de FlowRent y el capital de la cartera son distintos.
 
-Riesgo: Airbnb no puede presentarse como banco ni otorgar crédito abierto sin encuadre regulatorio.
+VCs pueden financiar la tecnología y el crecimiento de la empresa.
+Inversores de deuda o de cartera pueden fondear los adelantos y recibir
+el rendimiento acordado.
 
-Solución: estructuramos Renta Estable como adelanto opt-in de cobros futuros dentro de la plataforma. El host no paga cuotas; autoriza una retención limitada de próximos payouts hasta cubrir adelanto + fee transparente.
-
-Para montos mayores o adelantos sobre ingresos no confirmados, Airbnb opera con un partner regulado y conserva su ventaja diferencial: datos de underwriting y control de liquidación.
+La fuente de capital no reemplaza la validación legal de quién origina,
+opera y administra cada adelanto.
 ```
 
-## Fuentes revisadas
+## Fuentes de referencia
 
 - [Ley 21.526 de Entidades Financieras](https://www.argentina.gob.ar/normativa/nacional/ley-21526-16071/texto)
 - [BCRA: Registro de Otros Proveedores No Financieros de Crédito](https://www.bcra.gob.ar/solicitar-inscripcion-actualizacion-o-dar-de-baja-para-otros-proveedores-no-financieros-de-credito/)

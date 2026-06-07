@@ -3,17 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Renta Estable | Simulador de adelanto</title>
+    <title>FlowRent | Consola de decisión</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Renta Estable</p>
-          <h1>Simulador de adelanto estacional</h1>
+          <p class="eyebrow">FlowRent · caso Airbnb del MVP</p>
+          <h1>Consola de decisión estacional</h1>
         </div>
         <div class="topbar-controls">
+          <a class="secondary-button" href="./host.html">Vista host</a>
           <label class="field compact">
             <span>Host</span>
             <select id="hostSelect"></select>
@@ -23,6 +24,18 @@
       </header>
 
       <main class="dashboard">
+        <section class="demo-rail" aria-label="Modo presentación">
+          <div>
+            <span class="demo-label">Modo presentación</span>
+            <strong id="demoNarrative">Oferta responsable basada en el ciclo completo del host.</strong>
+          </div>
+          <div class="demo-actions">
+            <button class="demo-action active" data-demo-action="base" type="button">1 · Oferta base</button>
+            <button class="demo-action" data-demo-action="stress" type="button">2 · Temporada −30%</button>
+            <button class="demo-action" data-demo-action="reject" type="button">3 · Rechazo explicable</button>
+          </div>
+        </section>
+
         <section class="summary-grid" aria-label="Resumen de adelanto">
           <article class="metric-panel decision-panel">
             <span class="metric-label">Decisión</span>
@@ -35,100 +48,175 @@
             <div class="meter"><span id="scoreMeter"></span></div>
           </article>
           <article class="metric-panel">
+            <span class="metric-label">PD proxy 12 meses</span>
+            <strong id="pdValue">-</strong>
+            <small id="pricingHint">-</small>
+          </article>
+          <article class="metric-panel">
             <span class="metric-label">Adelanto recomendado</span>
             <strong id="recommendedValue">-</strong>
             <small id="maxAdvanceValue">-</small>
-          </article>
-          <article class="metric-panel">
-            <span class="metric-label">Recuperación visible</span>
-            <strong id="repaymentValue">-</strong>
-            <small id="repaymentHint">-</small>
           </article>
         </section>
 
         <section class="workspace">
           <aside class="control-panel">
-            <div class="section-heading">
-              <h2>Parámetros</h2>
-              <span id="hostCity">-</span>
-            </div>
+            <details class="param-group" open>
+              <summary>
+                <span>Parámetros de oferta</span>
+                <small id="hostCity">-</small>
+              </summary>
 
-            <label class="field">
-              <span>Adelanto solicitado</span>
-              <input id="requestedAmount" type="number" min="0" step="50000" />
-            </label>
+              <div class="field assumption-field">
+                <label for="requestedAmount">
+                  <span>Adelanto solicitado (USD)</span>
+                </label>
+                <input id="requestedAmount" type="number" min="0" step="100" />
+                <details class="assumption-help">
+                  <summary>Qué significa y valor recomendado</summary>
+                  <p>Es el monto que el comercio quiere recibir hoy. Para una primera oferta responsable, usar <strong>20%–35%</strong> del P10 futuro; en Martín, <strong>USD 1.500</strong> mantiene aprobación total.</p>
+                </details>
+              </div>
 
-            <label class="field">
-              <span>Ingreso futuro P10</span>
-              <input id="futureRevenue" type="number" min="0" step="50000" />
-            </label>
+              <div class="field assumption-field">
+                <label for="futureRevenue">
+                  <span>Ingreso futuro P10 (USD)</span>
+                </label>
+                <input id="futureRevenue" type="number" min="0" step="100" />
+                <details class="assumption-help">
+                  <summary>Qué significa y valor recomendado</summary>
+                  <p>Es una estimación conservadora del ingreso futuro: el escenario bajo contra el que se calcula recuperabilidad. Usar P10, no promedio. Para Martín, el valor base es <strong>USD 5.200</strong>.</p>
+                </details>
+              </div>
 
-            <label class="range-field">
-              <span>
-                <b>Caída de temporada</b>
-                <output id="seasonDropOutput">0%</output>
-              </span>
-              <input id="seasonDrop" type="range" min="0" max="70" step="5" />
-            </label>
+              <div class="range-field assumption-field">
+                <label for="seasonDrop">
+                  <span>
+                    <b>Caída de temporada</b>
+                    <output id="seasonDropOutput">0%</output>
+                  </span>
+                </label>
+                <input id="seasonDrop" type="range" min="0" max="70" step="5" />
+                <details class="assumption-help">
+                  <summary>Qué significa y valor recomendado</summary>
+                  <p>Reduce el P10 para probar una temporada peor a la esperada. Usar <strong>0%</strong> como base, <strong>20%–30%</strong> como stress razonable y <strong>40%+</strong> como escenario severo.</p>
+                </details>
+              </div>
 
-            <label class="range-field">
-              <span>
-                <b>Retención de cobros</b>
-                <output id="holdbackOutput">0%</output>
-              </span>
-              <input id="holdback" type="range" min="0" max="50" step="1" />
-            </label>
+              <div class="range-field assumption-field">
+                <label for="holdback">
+                  <span>
+                    <b>Retención de cobros</b>
+                    <output id="holdbackOutput">0%</output>
+                  </span>
+                </label>
+                <input id="holdback" type="range" min="0" max="50" step="1" />
+                <details class="assumption-help">
+                  <summary>Qué significa y valor recomendado</summary>
+                  <p>Es el porcentaje de cada cobro futuro que se retiene hasta completar adelanto + fee. Usar <strong>20%–35%</strong>; valores superiores a 40% pueden presionar demasiado el flujo del host.</p>
+                </details>
+              </div>
 
-            <label class="range-field">
-              <span>
-                <b>Fee</b>
-                <output id="feeOutput">0%</output>
-              </span>
-              <input id="fee" type="range" min="0" max="30" step="1" />
-            </label>
+              <div class="range-field assumption-field">
+                <label for="fee">
+                  <span>
+                    <b>Fee total del adelanto</b>
+                    <output id="feeOutput">0%</output>
+                  </span>
+                </label>
+                <input id="fee" type="range" min="0" max="12" step="0.5" />
+                <details class="assumption-help">
+                  <summary>Qué significa y valor recomendado</summary>
+                  <p>Es el costo total que paga el host por adelantar cobros, no una tasa anual. Para adelantos cortos en USD, usar <strong>3%–5%</strong> en perfiles aprobados; <strong>6%</strong> sólo para líneas piloto o riesgo más alto.</p>
+                </details>
+              </div>
+            </details>
 
-            <div class="section-heading cluster-title">
-              <h2>Supuestos de margen</h2>
-              <span>Cartera</span>
-            </div>
+            <details class="param-group">
+              <summary>
+                <span>Supuestos de margen</span>
+                <small>Cartera</small>
+              </summary>
+              <p class="assumptions-note">Rangos orientativos para modelar un piloto en USD. Deben reemplazarse por cotizaciones y resultados reales antes de operar.</p>
 
-            <label class="range-field">
-              <span>
-                <b>Costo de fondeo anual</b>
-                <output id="fundingCostOutput">35%</output>
-              </span>
-              <input id="fundingCost" type="range" min="0" max="70" step="5" value="35" />
-            </label>
+              <div class="range-field assumption-field">
+                <label for="fundingCost">
+                  <span>
+                    <b>Costo de fondeo anual (USD)</b>
+                    <output id="fundingCostOutput">7%</output>
+                  </span>
+                </label>
+                <input id="fundingCost" type="range" min="0" max="20" step="1" value="7" />
+                <details class="assumption-help">
+                  <summary>Qué significa y valor recomendado</summary>
+                  <p>Es el rendimiento anual exigido por quienes aportan el capital de la cartera. Para una cartera en USD respaldada por cobros visibles, usar <strong>6%–10%</strong>; valor base recomendado: <strong>7%</strong>. Testear 10%–12% como stress.</p>
+                </details>
+              </div>
 
-            <label class="range-field">
-              <span>
-                <b>Probabilidad de default</b>
-                <output id="defaultProbabilityOutput">6%</output>
-              </span>
-              <input id="defaultProbability" type="range" min="0" max="25" step="1" value="6" />
-            </label>
+              <div class="range-field assumption-field">
+                <label for="pdStress">
+                  <span>
+                    <b>Stress sobre PD individual</b>
+                    <output id="pdStressOutput">0%</output>
+                  </span>
+                </label>
+                <input id="pdStress" type="range" min="-50" max="100" step="10" value="0" />
+                <details class="assumption-help">
+                  <summary>Qué significa y valor recomendado</summary>
+                  <p>Aumenta o reduce proporcionalmente la probabilidad de default estimada para probar escenarios. Usar <strong>0%</strong> como base y <strong>+30% a +50%</strong> para un escenario adverso prudente.</p>
+                </details>
+              </div>
 
-            <label class="range-field">
-              <span>
-                <b>Pérdida dado default</b>
-                <output id="lossGivenDefaultOutput">35%</output>
-              </span>
-              <input id="lossGivenDefault" type="range" min="0" max="80" step="5" value="35" />
-            </label>
+              <div class="range-field assumption-field">
+                <label for="lossGivenDefault">
+                  <span>
+                    <b>Pérdida dado default</b>
+                    <output id="lossGivenDefaultOutput">35%</output>
+                  </span>
+                </label>
+                <input id="lossGivenDefault" type="range" min="0" max="80" step="5" value="35" />
+                <details class="assumption-help">
+                  <summary>Qué significa y valor recomendado</summary>
+                  <p>Es el porcentaje del adelanto que no se recuperaría si ocurre un default. Con retención de cobros y límites conservadores, probar <strong>25%–40%</strong>; valor base recomendado: <strong>35%</strong>.</p>
+                </details>
+              </div>
 
-            <label class="range-field">
-              <span>
-                <b>Costo operativo</b>
-                <output id="operatingCostOutput">1%</output>
-              </span>
-              <input id="operatingCost" type="range" min="0" max="10" step="0.5" value="1" />
-            </label>
+              <div class="range-field assumption-field">
+                <label for="operatingMargin">
+                  <span>
+                    <b>Margen objetivo anual</b>
+                    <output id="operatingMarginOutput">3%</output>
+                  </span>
+                </label>
+                <input id="operatingMargin" type="range" min="0" max="15" step="1" value="3" />
+                <details class="assumption-help">
+                  <summary>Qué significa y valor recomendado</summary>
+                  <p>Es el retorno anual que FlowRent busca agregar al pricing por encima de fondeo y riesgo. Afecta el fee sugerido, no el resultado del fee contractual actual. Usar <strong>2%–5%</strong>; valor base recomendado: <strong>3%</strong>.</p>
+                </details>
+              </div>
 
-            <div class="section-heading cluster-title">
-              <h2>Clusters</h2>
-              <span>Peso x score</span>
-            </div>
-            <div id="clusterControls" class="cluster-controls"></div>
+              <div class="range-field assumption-field">
+                <label for="operatingCost">
+                  <span>
+                    <b>Costo operativo por operación</b>
+                    <output id="operatingCostOutput">1%</output>
+                  </span>
+                </label>
+                <input id="operatingCost" type="range" min="0" max="5" step="0.5" value="1" />
+                <details class="assumption-help">
+                  <summary>Qué significa y valor recomendado</summary>
+                  <p>Representa KYC, pagos, monitoreo, administración y soporte como porcentaje del adelanto. Para un piloto usar <strong>0,5%–1,5%</strong>; valor base recomendado: <strong>1%</strong>. Debería bajar con escala y automatización.</p>
+                </details>
+              </div>
+            </details>
+
+            <details class="param-group">
+              <summary>
+                <span>Clusters</span>
+                <small>Peso x score</small>
+              </summary>
+              <div id="clusterControls" class="cluster-controls"></div>
+            </details>
           </aside>
 
           <section class="analysis-panel">
@@ -150,49 +238,24 @@
               </article>
             </div>
 
-            <div class="panel-row bottom">
-              <article class="cluster-panel">
-                <div class="section-heading">
-                  <h2>Score por cluster</h2>
-                  <span id="weightedScoreLabel">-</span>
-                </div>
-                <div id="clusterBars" class="cluster-bars"></div>
-              </article>
-
-              <article class="booking-panel">
-                <div class="section-heading">
-                  <h2>Reservas futuras</h2>
-                  <span id="futureBookingTotal">-</span>
-                </div>
-                <div id="futureBookings" class="booking-list"></div>
-              </article>
-            </div>
+            <article class="booking-panel">
+              <div class="section-heading">
+                <h2>Reservas futuras</h2>
+                <span id="futureBookingTotal">-</span>
+              </div>
+              <div id="futureBookings" class="booking-list"></div>
+            </article>
           </section>
         </section>
 
-        <section class="portfolio-section" aria-label="Métricas de cartera">
-          <article class="portfolio-panel">
+        <section class="profit-section" aria-label="Rentabilidad de la oferta">
+          <article class="profit-panel highlighted">
             <div class="section-heading">
-              <h2>Métricas de cartera</h2>
-              <span id="portfolioCount">-</span>
+              <h2>Rentabilidad de esta oferta</h2>
+              <span id="offerMarginLabel">-</span>
             </div>
-            <div id="portfolioMetrics" class="portfolio-metrics"></div>
-          </article>
-
-          <article class="unit-panel">
-            <div class="section-heading">
-              <h2>Unit economics</h2>
-              <span id="portfolioMarginLabel">-</span>
-            </div>
-            <div id="unitEconomics" class="unit-economics"></div>
-          </article>
-
-          <article class="sensitivity-panel">
-            <div class="section-heading">
-              <h2>Sensibilidad</h2>
-              <span>Fondeo · PD · LGD</span>
-            </div>
-            <div id="sensitivityTable" class="sensitivity-table"></div>
+            <div id="offerProfitability" class="profit-summary"></div>
+            <p class="profit-explanation">Resultado estimado = ingreso por fee − costo de fondeo − pérdida esperada − costo operativo.</p>
           </article>
         </section>
       </main>

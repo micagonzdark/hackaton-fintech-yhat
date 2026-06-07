@@ -114,12 +114,17 @@ CREATE TABLE credit_offers (
   host_id TEXT NOT NULL,
   requested_amount_ars INTEGER NOT NULL,
   final_score REAL NOT NULL,
+  pd_12m_pct REAL NOT NULL,
+  pd_method TEXT NOT NULL,
   risk_band TEXT NOT NULL,
   decision TEXT NOT NULL,
   expected_future_revenue_p10_ars INTEGER NOT NULL,
+  recoverability_cap_ars INTEGER NOT NULL,
+  risk_adjusted_cap_ars INTEGER NOT NULL,
   max_advance_ars INTEGER NOT NULL,
   recommended_advance_ars INTEGER NOT NULL,
   fee_pct REAL NOT NULL,
+  suggested_fee_pct REAL NOT NULL,
   holdback_pct REAL NOT NULL,
   estimated_repayment_months INTEGER NOT NULL,
   stress_down_30 TEXT NOT NULL,
@@ -181,7 +186,7 @@ INSERT INTO markets (city, province, destination_type, high_season_months, seaso
 ('Ushuaia', 'Tierra del Fuego', 'montana_nieve_naturaleza', 'jul,aug,jan,feb', 0.72, 72, 7.5, 75, 45, 4.0);
 
 INSERT INTO hosts (host_id, display_name, city, host_tenure_years, completed_bookings, identity_verified, tax_info_verified, bank_account_verified, prior_platform_loans, prior_loans_repaid, fraud_flags, account_suspension_count, active_listings_count) VALUES
-('H001', 'Lucía - Cabaña Cerro Catedral', 'Bariloche', 8.7, 486, 1, 1, 1, 2, 2, 0, 0, 2),
+('H001', 'María - Cabaña Cerro Catedral', 'Bariloche', 8.7, 486, 1, 1, 1, 2, 2, 0, 0, 2),
 ('H002', 'Martín - Depto Playa Grande', 'Mar del Plata', 5.2, 231, 1, 1, 1, 1, 1, 0, 0, 1),
 ('H003', 'Sofía - Casa Chacras', 'Mendoza', 4.1, 178, 1, 1, 1, 0, 0, 0, 0, 1),
 ('H004', 'Nicolás - Monoambiente Nuevo', 'Villa Gesell', 0.8, 19, 1, 0, 1, 0, 0, 0, 0, 1),
@@ -326,10 +331,10 @@ INSERT INTO host_cluster_scores (host_id, cluster_key, score, explanation) VALUE
 ('H006', 'future_bookings', 57, 'Dos reservas invernales confirmadas con riesgo medio.'),
 ('H006', 'market_risk', 50, 'Riesgo climático alto y demanda menos profunda.');
 
-INSERT INTO credit_offers (offer_id, host_id, requested_amount_ars, final_score, risk_band, decision, expected_future_revenue_p10_ars, max_advance_ars, recommended_advance_ars, fee_pct, holdback_pct, estimated_repayment_months, stress_down_30, stress_down_50, main_reason, created_at) VALUES
-('O001', 'H001', 2800000, 89.0, 'bajo', 'approved', 11800000, 3200000, 2500000, 10.0, 28.0, 3, 'recuperación probable', 'recuperación con extensión', 'Host histórico con alta reputación y reservas fuertes de invierno.', '2026-06-05'),
-('O002', 'H002', 1800000, 75.4, 'medio', 'approved', 5200000, 1700000, 1150000, 14.0, 32.0, 4, 'recuperación probable', 'riesgo parcial', 'Buena temporada futura, pero destino muy estacional y reservas lejanas.', '2026-06-05'),
-('O003', 'H003', 1000000, 77.2, 'medio_bajo', 'approved', 4100000, 1200000, 700000, 12.0, 22.0, 3, 'recuperación probable', 'recuperación probable con menor margen', 'Buen perfil, aunque la necesidad de smoothing es menor.', '2026-06-05'),
-('O004', 'H004', 700000, 38.8, 'alto', 'rejected', 900000, 0, 0, 0.0, 0.0, 0, 'no aplica', 'no aplica', 'Historial insuficiente, permiso pendiente y alto riesgo de cancelación.', '2026-06-05'),
-('O005', 'H005', 900000, 79.8, 'medio_bajo', 'approved', 3600000, 950000, 500000, 11.0, 18.0, 2, 'recuperación probable', 'recuperación probable', 'Host excelente, pero ingresos urbanos estables reducen necesidad estacional.', '2026-06-05'),
-('O006', 'H006', 900000, 62.6, 'medio_alto', 'pilot_line', 2400000, 650000, 420000, 18.0, 35.0, 4, 'riesgo parcial', 'alto riesgo', 'Línea piloto por volatilidad, clima y reservas futuras acotadas.', '2026-06-05');
+INSERT INTO credit_offers (offer_id, host_id, requested_amount_ars, final_score, pd_12m_pct, pd_method, risk_band, decision, expected_future_revenue_p10_ars, recoverability_cap_ars, risk_adjusted_cap_ars, max_advance_ars, recommended_advance_ars, fee_pct, suggested_fee_pct, holdback_pct, estimated_repayment_months, stress_down_30, stress_down_50, main_reason, created_at) VALUES
+('O001', 'H001', 2800000, 89.0, 2.64, 'expert_proxy_v1', 'bajo', 'approved', 11800000, 3176923, 3092948, 3092948, 2800000, 4.0, 3.74, 28.0, 3, 'recuperación probable', 'recuperación con extensión', 'Host histórico con alta reputación y reservas fuertes de invierno.', '2026-06-06'),
+('O002', 'H002', 1500000, 75.4, 5.98, 'expert_proxy_v1', 'medio', 'approved', 5200000, 1733333, 1629721, 1629721, 1500000, 5.0, 5.08, 35.0, 4, 'aprobación parcial prudente', 'riesgo parcial', 'Buena temporada futura, pero destino muy estacional y reservas lejanas.', '2026-06-06'),
+('O003', 'H003', 1000000, 77.2, 5.37, 'expert_proxy_v1', 'medio_bajo', 'partial', 4100000, 867308, 820771, 820771, 820771, 4.0, 4.0, 22.0, 3, 'recuperación probable', 'recuperación probable con menor margen', 'Buen perfil, aunque la necesidad de smoothing es menor.', '2026-06-06'),
+('O004', 'H004', 700000, 38.8, 45.00, 'expert_proxy_v1', 'alto', 'rejected', 900000, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 'no aplica', 'no aplica', 'Historial insuficiente, permiso pendiente y alto riesgo de cancelación.', '2026-06-06'),
+('O005', 'H005', 900000, 79.8, 4.59, 'expert_proxy_v1', 'medio_bajo', 'partial', 3600000, 629126, 600245, 600245, 600245, 3.0, 2.95, 18.0, 2, 'recuperación probable', 'recuperación probable', 'Host excelente, pero ingresos urbanos estables reducen necesidad estacional.', '2026-06-06'),
+('O006', 'H006', 900000, 62.6, 12.88, 'expert_proxy_v1', 'medio_alto', 'pilot_line', 2400000, 792453, 690350, 690350, 690350, 6.0, 6.06, 35.0, 4, 'riesgo parcial', 'alto riesgo', 'Línea piloto por volatilidad, clima y reservas futuras acotadas.', '2026-06-06');

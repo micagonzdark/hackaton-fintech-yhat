@@ -1,8 +1,10 @@
 # Base de datos MVP: adelanto estacional para anfitriones
 
+> La arquitectura vigente incorpora una PD proxy individual, ajuste del monto por riesgo y pricing explicable. Ver [`docs/modelo_hibrido.md`](modelo_hibrido.md) como especificación principal.
+
 ## Idea central
 
-El producto ofrece un adelanto opt-in sobre cobros futuros a anfitriones de alquiler temporario usando datos que una plataforma tipo Airbnb ya conoce: historial, reputación, propiedad, ingresos, reservas futuras y riesgo del destino.
+El producto ofrece adelantos opt-in sobre cobros futuros a comercios estacionales dentro de plataformas digitales. El MVP usa un caso tipo Airbnb y, por eso, modela historial del host, reputación, propiedad, ingresos, reservas futuras y riesgo del destino.
 
 El score se explica por clusters:
 
@@ -29,18 +31,18 @@ min(
 
 La frase de pitch:
 
-> No pedimos que Airbnb sea banco. Adelantamos una parte conservadora de cobros futuros que la plataforma puede observar y recuperar mediante retención transparente de próximos payouts.
+> No pedimos que una plataforma sea banco. Convertimos datos operativos y cobros observables en adelantos conservadores que pueden recuperarse mediante una retención transparente.
 
 ## Marco legal y reformulación de producto
 
-La versión "Airbnb presta plata" es frágil para pitch: Airbnb no es banco y una oferta habitual de crédito puede activar obligaciones regulatorias. Por eso la narrativa recomendada es **adelanto de cobros futuros**, no préstamo abierto.
+La versión "la plataforma presta plata" es frágil para pitch: una oferta habitual de crédito puede activar obligaciones regulatorias. Por eso la narrativa recomendada es **adelanto de cobros futuros**, sin ocultar su sustancia económica ni asumir que la plataforma será la entidad financiadora.
 
 Principios de diseño:
 
 - El host opta dentro de la app y autoriza uso de datos, adelanto y retención de payouts.
 - El producto se recupera por compensación de futuros cobros dentro de la plataforma.
 - Para el MVP más defendible, priorizar reservas confirmadas y cobradas o altamente aseguradas.
-- Para montos mayores o adelantos sobre ingresos no confirmados, usar un partner regulado o validar registro propio como proveedor no financiero de crédito.
+- Para montos mayores o adelantos sobre ingresos no confirmados, validar quién aporta capital, quién origina, quién opera y qué registros o licencias corresponden.
 
 Ver análisis completo en [`docs/legal_framework.md`](legal_framework.md).
 
@@ -147,7 +149,7 @@ Guarda la decisión final del adelanto:
 
 ### 1. El mejor caso
 
-Lucía, Bariloche:
+María, Bariloche:
 
 - 8.7 años en plataforma
 - 486 reservas completadas
@@ -252,11 +254,12 @@ Sobre las ofertas base del dataset:
 Hosts analizados: 6
 Hosts con oferta positiva: 5
 Hosts rechazados: 1
-Capital recomendado: ARS 5.270.000
-Fee esperado: ARS 625.600
-Fee promedio ponderado: 11,9%
+Capital recomendado: ARS 6.111.669
+Fee esperado: ARS 736.487
+Fee promedio ponderado: 12,1%
 Plazo promedio estimado: 3,2 meses
-Advance / ingreso futuro P10: 18-19%
+Advance / ingreso futuro P10: 22,6%
+PD ponderada: 4,9%
 ```
 
 La métrica clave es:
@@ -265,7 +268,7 @@ La métrica clave es:
 Advance / P10 futuro
 ```
 
-Esta métrica responde cuánto estamos adelantando contra el escenario conservador de ingresos futuros. En el piloto simulado está por debajo del 20%, lo que permite defender que el producto no presta contra un escenario optimista.
+Esta métrica responde cuánto estamos adelantando contra el escenario conservador de ingresos futuros. En el piloto simulado ronda el 23% y, además, cada tope se ajusta por la PD individual.
 
 Otra métrica útil es:
 
@@ -310,8 +313,9 @@ La conclusión de negocio es importante:
 Por eso la demo incluye supuestos editables:
 
 - costo de fondeo anual
-- probabilidad de default
+- stress sobre la PD individual
 - pérdida dado default
+- margen objetivo anual
 - costo operativo
 
 También incluye sensibilidad en tres escenarios:
@@ -322,7 +326,7 @@ Base: supuestos elegidos por el usuario
 Stress: fondeo alto, PD alta, LGD alta
 ```
 
-Esta sección es útil para explicar que el producto puede ser viable como infraestructura B2B si trabaja con una plataforma o partner financiero que tenga bajo costo de capital y control del flujo de cobro.
+Esta sección es útil para explicar que el producto puede ser viable como infraestructura B2B si combina una plataforma con control del flujo de cobro y capital de cartera a un costo competitivo.
 
 ## Detalle técnico del motor de decisión
 
@@ -544,11 +548,14 @@ ingreso ajustado = ARS 8.260.000
 
 ## 5. Cálculo del monto máximo
 
-La fórmula del MVP es:
+La fórmula híbrida del MVP es:
 
 ```text
-monto_maximo =
+tope_recuperable =
   ingreso_futuro_ajustado * retencion_pct / (1 + fee_pct)
+
+monto_maximo =
+  tope_recuperable * (1 - PD)
 ```
 
 Donde:
@@ -559,7 +566,7 @@ retencion_pct = porcentaje de payouts que la plataforma puede retener
 fee_pct = costo total del adelanto
 ```
 
-La división por `(1 + fee_pct)` evita adelantar un principal que después no se pueda recuperar cuando se suma el costo.
+La división por `(1 + fee_pct)` evita adelantar un principal que después no se pueda recuperar cuando se suma el costo. El factor `(1 - PD)` agrega un buffer individual de riesgo.
 
 Ejemplo H001, temporada normal:
 
@@ -570,6 +577,9 @@ fee = 10%
 
 monto_maximo = 11.800.000 * 0.28 / 1.10
 monto_maximo = ARS 3.003.636
+
+monto_ajustado_PD = 3.003.636 * (1 - 0,0264)
+monto_ajustado_PD = ARS 2.924.242
 ```
 
 Si el host pide ARS 2.800.000:
@@ -588,12 +598,15 @@ fee = 10%
 
 monto_maximo = 8.260.000 * 0.28 / 1.10
 monto_maximo = ARS 2.102.545
+
+monto_ajustado_PD = 2.102.545 * (1 - 0,0264)
+monto_ajustado_PD = ARS 2.046.969
 ```
 
 Si pide ARS 2.800.000:
 
 ```text
-monto_recomendado = ARS 2.102.545
+monto_recomendado = ARS 2.046.969
 decisión = aprobación parcial
 ```
 
@@ -602,8 +615,11 @@ decisión = aprobación parcial
 Luego del score y del monto máximo, el MVP clasifica la decisión así:
 
 ```text
-score < 50
+regla dura, score < 50 o PD >= 35%
   -> rechazado
+
+score < 65 o PD >= 15%
+  -> línea piloto
 
 monto_recomendado >= 95% del monto solicitado
   -> aprobado
@@ -740,20 +756,25 @@ def ofrecer_adelanto(host, monto_solicitado, caida_temporada_pct):
         host.market_risk * 0.10
     )
 
-    if score < 50 or host.tiene_regla_excluyente:
+    pd = estimar_pd_proxy(score)
+
+    if score < 50 or pd >= 0.35 or host.tiene_regla_excluyente:
         return rechazar(score)
 
     ingreso_ajustado = host.expected_future_revenue_p10 * (1 - caida_temporada_pct)
 
-    monto_maximo = (
+    tope_recuperable = (
         ingreso_ajustado *
         host.holdback_pct /
         (1 + host.fee_pct)
     )
+    monto_maximo = tope_recuperable * (1 - pd)
 
     monto_recomendado = min(monto_solicitado, monto_maximo)
 
-    if monto_recomendado >= monto_solicitado * 0.95:
+    if score < 65 or pd >= 0.15:
+        decision = "línea piloto"
+    elif monto_recomendado >= monto_solicitado * 0.95:
         decision = "aprobado"
     elif monto_recomendado >= monto_solicitado * 0.45:
         decision = "aprobación parcial"
@@ -765,6 +786,8 @@ def ofrecer_adelanto(host, monto_solicitado, caida_temporada_pct):
     return {
         "decision": decision,
         "score": score,
+        "pd": pd,
+        "tope_recuperable": tope_recuperable,
         "monto_maximo": monto_maximo,
         "monto_recomendado": monto_recomendado,
     }
@@ -779,7 +802,7 @@ El MVP simplifica varias cosas:
 - Los scores por cluster están precalculados.
 - No se recalculan automáticamente las variables internas.
 - El ingreso P10 es un dato cargado, no estimado por modelo estadístico.
-- No hay costo de fondeo ni pérdida esperada por mora.
+- La PD es una proxy experta, no un modelo calibrado con defaults reales.
 - No hay implementación de KYC, contratos, reporting regulatorio ni contabilidad.
 - La recuperación se estima solo con reservas visibles y P10 futuro.
 

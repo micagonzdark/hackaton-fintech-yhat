@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import math
 import sqlite3
 from pathlib import Path
 
@@ -20,6 +21,36 @@ def connect(db_path):
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def proxy_pd_pct(score, stress_pct=0):
+    base_pd = max(1.5, min(45, 50 * math.exp(-0.06 * (score - 40))))
+    return max(0.5, min(60, base_pd * (1 + stress_pct / 100)))
+
+
+def hard_rule_reasons(conn, host_id):
+    row = conn.execute(
+        """
+        SELECT h.fraud_flags, h.account_suspension_count, h.identity_verified,
+               h.bank_account_verified, l.legal_permit_status
+        FROM hosts h
+        JOIN listings l ON l.host_id = h.host_id
+        WHERE h.host_id = ?
+        """,
+        (host_id,),
+    ).fetchone()
+    reasons = []
+    if row["fraud_flags"] > 0:
+        reasons.append("alerta de fraude")
+    if row["account_suspension_count"] > 0:
+        reasons.append("cuenta suspendida")
+    if not row["identity_verified"]:
+        reasons.append("identidad no verificada")
+    if not row["bank_account_verified"]:
+        reasons.append("cuenta bancaria no verificada")
+    if row["legal_permit_status"] != "verified":
+        reasons.append("habilitación pendiente")
+    return reasons
 
 
 def list_hosts(conn):
@@ -103,11 +134,15 @@ def show_host(conn, host_id):
     print("-" * 80)
     print(f"Decisión: {offer['decision']}")
     print(f"Score final: {offer['final_score']:.1f}")
+    print(f"PD proxy 12m: {pct(offer['pd_12m_pct'])} ({offer['pd_method']})")
     print(f"Adelanto pedido: {money(offer['requested_amount_ars'])}")
+    print(f"Tope recuperable: {money(offer['recoverability_cap_ars'])}")
+    print(f"Tope ajustado por PD: {money(offer['risk_adjusted_cap_ars'])}")
     print(f"Tope de adelanto: {money(offer['max_advance_ars'])}")
     print(f"Adelanto recomendado: {money(offer['recommended_advance_ars'])}")
     print(f"Retención: {pct(offer['holdback_pct'])}")
     print(f"Fee: {pct(offer['fee_pct'])}")
+    print(f"Fee sugerido: {pct(offer['suggested_fee_pct'])}")
     print(f"Stress -30%: {offer['stress_down_30']}")
     print(f"Motivo: {offer['main_reason']}")
 
@@ -142,7 +177,7 @@ def estimate_repayment(conn, host_id, principal, fee_pct, holdback_pct, season_d
     return max(len(months), 1), collected, collected >= target
 
 
-def simulate(conn, host_id, requested_amount, season_drop_pct, holdback_pct, fee_pct):
+def simulate(conn, host_id, requested_amount, season_drop_pct, holdback_pct, fee_pct, pd_stress_pct):
     host = conn.execute(
         """
         SELECT h.host_id, h.display_name, h.city, o.*
@@ -160,12 +195,17 @@ def simulate(conn, host_id, requested_amount, season_drop_pct, holdback_pct, fee
     base_fee = fee_pct if fee_pct is not None else host["fee_pct"]
 
     adjusted_revenue = host["expected_future_revenue_p10_ars"] * (1 - season_drop_pct / 100)
-    max_advance = adjusted_revenue * (base_holdback / 100) / (1 + base_fee / 100)
+    pd_pct = proxy_pd_pct(host["final_score"], pd_stress_pct)
+    recoverability_cap = adjusted_revenue * (base_holdback / 100) / (1 + base_fee / 100)
+    max_advance = recoverability_cap * (1 - pd_pct / 100)
     recommended = max(0, min(base_requested, max_advance))
+    rules = hard_rule_reasons(conn, host_id)
 
-    if host["final_score"] < 50 or host["decision"] == "rejected":
+    if rules or host["final_score"] < 50 or pd_pct >= 35:
         decision = "rechazado"
         recommended = 0
+    elif host["final_score"] < 65 or pd_pct >= 15:
+        decision = "línea piloto"
     elif recommended >= base_requested * 0.95:
         decision = "aprobado"
     elif recommended >= base_requested * 0.45:
@@ -187,6 +227,9 @@ def simulate(conn, host_id, requested_amount, season_drop_pct, holdback_pct, fee
     print(f"Simulación para {host['display_name']} ({host['city']})")
     print("-" * 80)
     print(f"Score base: {host['final_score']:.1f}")
+    print(f"PD proxy 12m: {pct(pd_pct)}")
+    if rules:
+        print(f"Regla excluyente: {', '.join(rules)}")
     print(f"Decisión simulada: {decision}")
     print(f"Caída de temporada: {pct(season_drop_pct)}")
     print(f"Ingreso futuro P10 base: {money(host['expected_future_revenue_p10_ars'])}")
@@ -194,7 +237,8 @@ def simulate(conn, host_id, requested_amount, season_drop_pct, holdback_pct, fee
     print(f"Adelanto pedido: {money(base_requested)}")
     print(f"Retención: {pct(base_holdback)}")
     print(f"Fee: {pct(base_fee)}")
-    print(f"Tope de adelanto simulado: {money(max_advance)}")
+    print(f"Tope recuperable simulado: {money(recoverability_cap)}")
+    print(f"Tope ajustado por PD: {money(max_advance)}")
     print(f"Adelanto recomendado simulado: {money(recommended)}")
     if recommended <= 0:
         print("Recuperación con reservas futuras: no aplica")
@@ -223,6 +267,7 @@ def main():
     sim_parser.add_argument("--season-drop", type=float, default=30, help="Caída estimada de temporada en porcentaje.")
     sim_parser.add_argument("--holdback", type=float, default=None, help="Retención de cobros en porcentaje.")
     sim_parser.add_argument("--fee", type=float, default=None, help="Fee/costo del adelanto en porcentaje.")
+    sim_parser.add_argument("--pd-stress", type=float, default=0, help="Stress proporcional sobre la PD individual.")
 
     args = parser.parse_args()
     db_path = Path(args.db)
@@ -236,7 +281,15 @@ def main():
         elif args.command == "show":
             show_host(conn, args.host_id)
         elif args.command == "simulate":
-            simulate(conn, args.host_id, args.requested, args.season_drop, args.holdback, args.fee)
+            simulate(
+                conn,
+                args.host_id,
+                args.requested,
+                args.season_drop,
+                args.holdback,
+                args.fee,
+                args.pd_stress,
+            )
     finally:
         conn.close()
 

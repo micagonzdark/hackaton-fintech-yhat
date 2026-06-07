@@ -1,10 +1,12 @@
 # Guía simple para entender el modelo
 
-Esta guía está pensada para explicar Renta Estable sin asumir conocimientos de economía o finanzas. La idea es que puedas mirar la demo, entender qué está calculando y defender el modelo en un pitch.
+> La demo ahora usa una arquitectura híbrida: conserva el score explicable y lo transforma en una PD proxy individual para ajustar monto, pérdida esperada y pricing. Ver [`docs/modelo_hibrido.md`](modelo_hibrido.md).
+
+Esta guía está pensada para explicar FlowRent sin asumir conocimientos de economía o finanzas. La idea es que puedas mirar la demo, entender qué está calculando y defender el modelo en un pitch.
 
 ## Resumen en un minuto
 
-Renta Estable no propone que Airbnb se convierta en banco. Propone un **adelanto opt-in de cobros futuros** para anfitriones de alquiler temporario.
+FlowRent propone adelantos embebidos para comercios estacionales que operan dentro de plataformas digitales. El MVP usa Airbnb como caso ideal inicial y muestra un **adelanto opt-in de cobros futuros** para anfitriones de alquiler temporario.
 
 El host tiene un problema simple:
 
@@ -17,7 +19,7 @@ y poco en temporada baja.
 El producto suaviza ese ingreso:
 
 ```text
-la plataforma adelanta una parte conservadora de futuros cobros
+un inversor de cartera aporta una parte conservadora de futuros cobros
 y después recupera ese adelanto reteniendo una parte de próximos payouts.
 ```
 
@@ -85,7 +87,7 @@ En el MVP, si el score es menor a 50, se rechaza.
 
 El mayor peso lo tiene **Historial de ingresos** porque es la mejor evidencia de capacidad económica real. No alcanza con que el host sea simpático o tenga buen rating: tiene que haber generado ingresos de forma repetible.
 
-El segundo peso más alto lo tiene **Reservas futuras** porque es la ventaja diferencial de una plataforma tipo Airbnb. Un banco no ve con el mismo detalle reservas, cancelaciones, fechas de cobro y reputación operativa.
+El segundo peso más alto lo tiene **Reservas futuras** porque es una ventaja diferencial de una plataforma tipo Airbnb: aporta reservas, cancelaciones, fechas de cobro y reputación operativa directamente desde el ecosistema donde ocurre la actividad.
 
 Los otros clusters ayudan a evitar errores:
 
@@ -96,11 +98,14 @@ Los otros clusters ayudan a evitar errores:
 
 ## Cómo se calcula el monto
 
-El monto no sale directamente del score. Sale de una fórmula de recuperabilidad:
+El monto no sale directamente del score. Primero se calcula recuperabilidad y después se agrega un buffer por la PD individual:
 
 ```text
-monto_máximo =
+tope_recuperable =
   ingreso_futuro_ajustado * retención / (1 + fee)
+
+tope_ajustado_por_PD =
+  tope_recuperable * (1 - PD)
 ```
 
 Donde:
@@ -121,7 +126,7 @@ En la fórmula, los porcentajes se usan como decimales:
 Después:
 
 ```text
-monto_recomendado = min(monto_solicitado, monto_máximo)
+monto_recomendado = min(monto_solicitado, tope_ajustado_por_PD)
 ```
 
 Esto significa que el modelo nunca ofrece más de lo que cree recuperable en un escenario conservador.
@@ -157,8 +162,11 @@ Por eso la demo permite mover la **caída de temporada**. Si ponés 30%, el mode
 El MVP usa estas reglas:
 
 ```text
-score < 50
+regla dura, score < 50 o PD >= 35%
   -> rechazado
+
+score < 65 o PD >= 15%
+  -> línea piloto
 
 monto_recomendado >= 95% del monto solicitado
   -> aprobado
@@ -180,9 +188,9 @@ Interpretación:
 - Línea piloto: hay algo de capacidad, pero conviene probar con poco monto.
 - Rechazado: el riesgo o el flujo futuro no alcanzan.
 
-## Ejemplo simple: Lucía en Bariloche
+## Ejemplo simple: María en Bariloche
 
-Lucía tiene:
+María tiene:
 
 ```text
 score = 89
@@ -197,6 +205,9 @@ Sin stress adicional:
 ```text
 monto_máximo = 11.800.000 * 0.28 / 1.10
 monto_máximo = ARS 3.003.636
+
+tope ajustado por PD = 3.003.636 * (1 - 0,0264)
+tope ajustado por PD = ARS 2.924.242
 ```
 
 Como pidió ARS 2.800.000 y el máximo calculado es mayor, puede aprobarse.
@@ -209,9 +220,12 @@ P10 ajustado = ARS 8.260.000
 
 monto_máximo = 8.260.000 * 0.28 / 1.10
 monto_máximo = ARS 2.102.545
+
+tope ajustado por PD = 2.102.545 * (1 - 0,0264)
+tope ajustado por PD = ARS 2.046.969
 ```
 
-Si en ese escenario pide ARS 2.500.000, el sistema recomienda ARS 2.102.545. Eso es una aprobación parcial.
+Si en ese escenario pide ARS 2.500.000, el sistema recomienda ARS 2.046.969. Eso es una aprobación parcial.
 
 ## Qué significa recuperación visible
 
@@ -252,12 +266,13 @@ Con los datos base:
 Hosts analizados: 6
 Hosts con oferta positiva: 5
 Hosts rechazados: 1
-Capital recomendado: ARS 5.270.000
-Fee esperado: ARS 625.600
-Fee ponderado: 11,9%
-Advance / P10: 19,4%
-Retención promedio: 27,7%
+Capital recomendado: ARS 6.111.669
+Fee esperado: ARS 736.487
+Fee ponderado: 12,1%
+Advance / P10: 22,6%
+Retención promedio: 27,9%
 Plazo promedio: 3,2 meses
+PD ponderada: 4,9%
 Score promedio: 76,8
 ```
 
@@ -276,12 +291,12 @@ Cómo interpretar cada métrica:
 La métrica más defendible para pitch es:
 
 ```text
-Advance / P10 = 19,4%
+Advance / P10 = 22,6%
 ```
 
 Esto dice:
 
-> Estamos adelantando menos del 20% del escenario conservador de ingresos futuros. No estamos adelantando contra un caso optimista.
+> Estamos adelantando cerca del 23% del escenario conservador y aplicando además un buffer por PD.
 
 ## Unit economics sin jerga
 
@@ -315,20 +330,21 @@ Con los supuestos base de la UI:
 
 ```text
 Costo de fondeo anual: 35%
-Probabilidad de default: 6%
+Stress sobre PD individual: 0%
 Pérdida dado default: 35%
-Costo operativo: 1%
+Margen objetivo anual: 10%
+Costo operativo por operación: 1%
 ```
 
 La cartera demo queda así:
 
 ```text
-Ingreso por fee:      ARS 625.600
-Costo de fondeo:     -ARS 492.333
-Pérdida esperada:    -ARS 110.670
-Costo operativo:      -ARS 52.700
-Contribución neta:    -ARS 30.103
-Margen:                    -0,6%
+Ingreso por fee:      ARS 736.487
+Costo de fondeo:     -ARS 576.642
+Pérdida esperada:    -ARS 105.767
+Costo operativo:      -ARS 61.117
+Contribución neta:     -ARS 7.039
+Margen:                    -0,1%
 ```
 
 Esto no significa que el producto no sirva. Significa que, con esos supuestos, está casi en equilibrio pero todavía levemente negativo.
@@ -451,7 +467,7 @@ En la parte baja:
 
 Podés mostrar tres momentos:
 
-1. Lucía, Bariloche:
+1. María, Bariloche:
 
 ```text
 Caso ideal: host histórica, destino estacional, reservas fuertes.
@@ -476,8 +492,9 @@ Después cerrar con cartera:
 
 ```text
 5 de 6 hosts reciben oferta.
-Advance / P10 de 19,4%.
-Margen base de -0,6%, muy sensible a fondeo y riesgo.
+Advance / P10 de 22,6%.
+PD ponderada de 4,9%.
+Margen base de -0,1%, muy sensible a fondeo y riesgo.
 ```
 
 ## Preguntas difíciles y respuestas simples
@@ -486,13 +503,17 @@ Margen base de -0,6%, muy sensible a fondeo y riesgo.
 
 Respuesta:
 
-> Para el MVP lo presentamos como adelanto de cobros futuros, no como préstamo abierto. El host autoriza que una parte de sus próximos payouts se retenga hasta cubrir adelanto + fee. Para producción o montos mayores, se puede operar con un partner regulado.
+> Para el MVP lo presentamos como adelanto de cobros futuros, no como préstamo abierto. El host autoriza que una parte de sus próximos payouts se retenga hasta cubrir adelanto + fee. Para producción hay que validar por jurisdicción quién fondea, quién origina, quién opera y qué registros corresponden.
 
-### ¿Por qué Airbnb no lo haría solo?
+### ¿Por qué una plataforma no lo haría sola?
 
 Respuesta:
 
-> Podría hacerlo, pero la propuesta no es competir como marketplace. Es una capa de scoring, simulación y originación que una plataforma o partner financiero puede integrar. El valor está en convertir datos operativos en una oferta explicable, con reglas de riesgo y métricas de margen.
+> Podría construirlo, pero debería desarrollar scoring, simulación, originación, administración de cartera e integraciones de fondeo. FlowRent ofrece esa infraestructura como una capacidad especializada que la plataforma puede integrar.
+
+### ¿Quién aporta el capital?
+
+> El capital de FlowRent y el capital de la cartera son distintos. Un VC puede invertir equity para financiar la empresa. Los adelantos pueden fondearse mediante deuda privada, un vehículo o inversores profesionales que reciben el rendimiento acordado.
 
 ### ¿Por qué usar P10 y no el promedio?
 
@@ -504,7 +525,7 @@ Respuesta:
 
 Respuesta:
 
-> Porque usamos supuestos exigentes: fondeo anual 35%, default 6%, LGD 35% y costo operativo 1%. Con esos valores, la cartera queda casi en punto de equilibrio. La demo muestra justamente qué palancas hacen viable el producto: fondeo más barato, menor pérdida por control de payouts, mejor fee o plazos más cortos.
+> Porque usamos supuestos exigentes: fondeo anual 35%, PD individual por host, LGD 35% y costo operativo 1%. Con esos valores, la cartera queda casi en punto de equilibrio. La demo muestra justamente qué palancas hacen viable el producto: fondeo más barato, menor pérdida por control de payouts, mejor fee o plazos más cortos.
 
 ### ¿Qué pasa si el host cancela reservas?
 
@@ -516,7 +537,7 @@ Respuesta:
 
 Respuesta:
 
-> Ese es uno de los riesgos principales. Por eso pesan antigüedad, reputación, reservas completadas y dependencia de la plataforma. En producción habría límites, retención contractual, monitoreo y posiblemente partner regulado.
+> Ese es uno de los riesgos principales. Por eso pesan antigüedad, reputación, reservas completadas y dependencia de la plataforma. En producción habría límites, retención contractual, monitoreo y una estructura legal validada.
 
 ## Errores conceptuales a evitar
 
@@ -528,4 +549,4 @@ Respuesta:
 
 ## Frase final para el pitch
 
-> Renta Estable convierte datos que la plataforma ya tiene en adelantos responsables para hosts estacionales. No adelanta contra optimismo: usa P10, retención de payouts, stress testing y unit economics para decidir cuánto ofrecer y bajo qué condiciones el producto es viable.
+> FlowRent convierte datos que las plataformas ya tienen en adelantos responsables para comercios estacionales. Airbnb es el primer caso demostrativo: no adelantamos contra optimismo, usamos P10, retención de payouts, stress testing y unit economics.

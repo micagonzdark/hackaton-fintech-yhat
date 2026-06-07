@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FlowRent | Oferta para anfitriones</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./host.css" />
+  </head>
+  <body>
+    <div class="host-shell">
+      <header class="host-topbar">
+        <div>
+          <p class="eyebrow">FlowRent · caso Airbnb del MVP</p>
+          <h1>Prepará tu próxima temporada</h1>
+          <p class="host-subtitle">Capital adaptado a tu ciclo, directamente dentro de la plataforma.</p>
+        </div>
+        <div class="topbar-controls">
+          <label class="field compact">
+            <span>Perfil para demo</span>
+            <select id="hostViewSelect"></select>
+          </label>
+          <a class="secondary-button" href="./index.html">Consola de riesgo</a>
+        </div>
+      </header>
+
+      <main class="host-main">
+        <section id="offerHero" class="offer-hero">
+          <div>
+            <span id="offerStatus" class="status-pill">Evaluando</span>
+            <h2 id="offerTitle">Cargando oferta...</h2>
+            <p id="offerDescription"></p>
+          </div>
+          <div class="offer-amount">
+            <span>Podés recibir hoy</span>
+            <strong id="offerAdvance">-</strong>
+            <small id="offerCity">-</small>
+          </div>
+        </section>
+
+        <section id="cycleStrip" class="cycle-strip" aria-label="Ciclo de la oferta">
+          <div>
+            <span>Hoy</span>
+            <strong>Recibís capital</strong>
+            <small>Invertís antes de la temporada.</small>
+          </div>
+          <div>
+            <span>Temporada alta</span>
+            <strong>Generás ingresos</strong>
+            <small>Seguís cobrando la mayor parte.</small>
+          </div>
+          <div>
+            <span>Próximos payouts</span>
+            <strong>Retención flexible</strong>
+            <small>Finaliza al completar el total.</small>
+          </div>
+        </section>
+
+        <section id="offerContent" class="host-grid">
+          <article class="host-card">
+            <div class="section-heading">
+              <h2>Tu oferta</h2>
+              <span>Transparente y sin cuotas</span>
+            </div>
+            <dl class="offer-details">
+              <div>
+                <dt>Adelanto</dt>
+                <dd id="detailAdvance">-</dd>
+              </div>
+              <div>
+                <dt>Costo de la operación</dt>
+                <dd id="detailFee">-</dd>
+              </div>
+              <div>
+                <dt>Total a recuperar</dt>
+                <dd id="detailTotal">-</dd>
+              </div>
+              <div>
+                <dt>Retención temporal</dt>
+                <dd id="detailHoldback">-</dd>
+              </div>
+              <div>
+                <dt>Fin estimado</dt>
+                <dd id="detailMonths">-</dd>
+              </div>
+              <div>
+                <dt>Reservas visibles</dt>
+                <dd id="detailCoverage">-</dd>
+              </div>
+            </dl>
+
+            <p class="offer-note"><strong>La retención no es el costo.</strong> Es el porcentaje temporal de cada cobro utilizado para recuperar el adelanto y el costo informado.</p>
+
+            <div class="consent-box">
+              <label><input id="dataConsent" type="checkbox" /> Autorizo el uso de mis datos de plataforma para evaluar esta oferta.</label>
+              <label><input id="payoutConsent" type="checkbox" /> Autorizo la retención indicada sobre próximos payouts hasta completar el total.</label>
+            </div>
+            <button id="acceptOffer" class="primary-action" type="button" disabled>Simular aceptación</button>
+            <p id="acceptanceMessage" class="acceptance-message" aria-live="polite"></p>
+          </article>
+
+          <aside class="host-side">
+            <article class="host-card">
+              <div class="section-heading">
+                <h2>Cómo funciona</h2>
+                <span>3 pasos</span>
+              </div>
+              <ol class="steps">
+                <li><strong>Recibís capital.</strong><span>El dinero llega antes de tu temporada fuerte.</span></li>
+                <li><strong>Seguís cobrando.</strong><span>Conservás la mayor parte de cada payout.</span></li>
+                <li><strong>La retención termina sola.</strong><span>Cuando se completa el total pactado, volvés a cobrar el 100%.</span></li>
+              </ol>
+            </article>
+
+            <article class="host-card">
+              <div class="section-heading">
+                <h2>Por qué recibís esta oferta</h2>
+                <span>Explicable</span>
+              </div>
+              <ul id="offerReasons" class="reason-list"></ul>
+            </article>
+          </aside>
+        </section>
+
+        <section id="rejectedContent" class="rejected-card" hidden>
+          <span class="status-pill rejected">Todavía no disponible</span>
+          <h2 id="rejectedTitle">No podemos ofrecerte un adelanto hoy</h2>
+          <p id="rejectedReason"></p>
+          <div class="improvement-grid">
+            <div><strong>Completá verificaciones</strong><span>Identidad, datos fiscales, cuenta y permisos.</span></div>
+            <div><strong>Construí historial</strong><span>Más reservas completadas mejoran la evaluación.</span></div>
+            <div><strong>Reducí cancelaciones</strong><span>Una operación estable habilita futuras ofertas.</span></div>
+          </div>
+        </section>
+
+        <p class="demo-disclaimer">Demo de hackathon con datos ficticios. La aceptación no genera una operación real.</p>
+      </main>
+    </div>
+    <script src="./host.js"></script>
+  </body>
+</html>
