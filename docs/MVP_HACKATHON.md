@@ -59,20 +59,20 @@ Resulta atractivo para demostrar la tesis porque:
 
 La moneda de payout disponible depende del país y del método de cobro. El pitch no debe afirmar que todos los hosts cobran en dólares.
 
-## 6. Caso de demo: María
+## 6. Caso de demo: Martín
 
-María es anfitriona en una zona turística de Argentina. Antes de la temporada necesita capital para preparar su propiedad.
+Martín es anfitrión en Mar del Plata. Tiene una temporada de verano muy marcada, reservas futuras visibles y necesita capital antes del pico de ingresos para preparar su propiedad.
 
 La demo muestra:
 
-- oferta de `ARS 2.800.000`;
-- fee y total a recuperar;
-- retención temporal sobre próximos payouts;
+- oferta de `USD 1.500`;
+- fee total de `5%`;
+- retención temporal de `35%` sobre próximos cobros;
 - motivos explicables de la decisión;
 - cobertura visible mediante reservas futuras;
 - consentimiento y aceptación simulados.
 
-En un escenario de temporada `-30%`, la oferta baja a aproximadamente `ARS 2.046.969`. Si existe una regla excluyente, como una habilitación pendiente, la oferta se rechaza.
+En un escenario de temporada `-30%`, la oferta baja de aprobación total a aprobación parcial. Si existe una regla excluyente, como una habilitación pendiente, la oferta se rechaza.
 
 ## 7. Producto MVP construido
 

@@ -32,7 +32,7 @@ Mostrar:
 
 - capital disponible hoy: `USD 1.500`;
 - costo total;
-- retención temporal: `28%`;
+- retención temporal: `35%`;
 - recuperación estimada;
 - motivos de la oferta;
 - consentimiento y aceptación.

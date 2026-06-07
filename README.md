@@ -84,14 +84,10 @@ http://127.0.0.1:4173/frontend/index.html
 
 ## Documentación clave
 
-- [Guía simple para entender el modelo](docs/guia_modelo_para_pitch.md)
-- [MVP integral para hackathon](docs/MVP_HACKATHON.md)
-- [Pitch final de 4 minutos](docs/pitch_4_minutos_final.md)
-- [Guion cronometrado de demo](docs/guion_demo_hackathon.md)
 - [Guía para armar los slides manualmente](docs/guia_slides_manual.md)
+- [Guion cronometrado de demo](docs/guion_demo_hackathon.md)
+- [MVP integral para hackathon](docs/MVP_HACKATHON.md)
 - [Especificación del modelo híbrido](docs/modelo_hibrido.md)
-- [Documento técnico híbrido v2.0](docs/Sistema_Modelos_Predictivos_Hibrido_v2.docx)
-- [Detalle técnico del modelo de datos y scoring](docs/data_model.md)
 - [Marco legal y reformulación como adelanto de cobros futuros](docs/legal_framework.md)
 
 ## Limitaciones honestas
