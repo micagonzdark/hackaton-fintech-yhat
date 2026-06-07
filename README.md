@@ -1,4 +1,4 @@
-# FlowRent · Hackathon Fintech 2026
+# FlowRent · Hackathon de Negocios Y-hat · Track Fintech · 2026
 
 > Adelantos embebidos para negocios estacionales dentro de plataformas digitales.
 
