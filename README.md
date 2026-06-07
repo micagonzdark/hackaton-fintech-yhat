@@ -1,5 +1,4 @@
 # FlowRent · Hackathon Fintech 2026
-# FlowRent
 
 > Adelantos embebidos para negocios estacionales dentro de plataformas digitales.
 
